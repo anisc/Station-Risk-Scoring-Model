@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Station Risk Scoring Model — WestJet Group Safety</title>
+  <meta name="description"
+    content="WestJet Group Safety station risk scoring model — rank airports by physical infrastructure (A), service provider capability (B), and system integration (C).">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <script src="js/isit_taxonomy.js"></script>
+  <script src="data/oapt_reports.js"></script>
+  <script src="data/crs_merged_reports.js"></script>
+  <script src="data/flight_counts.js"></script>
+  <script src="data/countries.js"></script>
+  <script src="data/states.js"></script>
+  <script>
+    const REGION_GEO_AREAS_DEFAULTS = {
+      'Western Canada & Mexico':             ['British Columbia','Alberta','Saskatchewan','Mexico'],
+      'Central Canada & LATAM':              ['Manitoba','Ontario','Quebec','Colombia','Peru','Chile','Argentina','Brazil','Bolivia','Uruguay','Ecuador'],
+      'Eastern Canada & Europe & Asia':      ['Quebec','Newfoundland','Nova Scotia','New Brunswick','United Kingdom','Ireland','France','Germany','Netherlands','Denmark','Portugal','Spain','Italy','Japan'],
+      'US & Caribbean':                      ['United States'],
+    };
+    let REGION_GEO_AREAS = { ...REGION_GEO_AREAS_DEFAULTS };
+    try {
+      const saved = JSON.parse(localStorage.getItem('stationRiskRegionSettings') || '{}');
+      if (saved.geoAreas) {
+        Object.keys(saved.geoAreas).forEach(k => { REGION_GEO_AREAS[k] = saved.geoAreas[k]; });
+      }
+    } catch (_) {}
+  </script>
+</head>
+
+<body>
+  <header>
+    <div class="header-content">
+      <div class="header-left">
+        <h1>Station Risk Scoring Model</h1>
+        <p>WestJet Group Safety</p>
+      </div>
+      <div class="header-formula" id="header-formula">
+        <span class="formula-pill formula-a">A Base</span>
+        <span class="formula-op">×</span>
+        <span class="formula-pill formula-b">B Multiplier</span>
+        <span class="formula-op">×</span>
+        <span class="formula-pill formula-c">C Multiplier</span>
+        <span class="formula-op">=</span>
+        <span class="formula-pill formula-final">Final Score</span>
+      </div>
+      <button id="agg-toggle" class="agg-toggle" title="Toggle aggregation mode">Σ Sum</button>
+    </div>
+  </header>
+
+  <nav class="tab-nav" role="navigation" aria-label="Main navigation">
+    <button class="tab active" data-view="dashboard" id="tab-dashboard">Dashboard</button>
+    <button class="tab" data-view="form" id="tab-form">Station Input</button>
+    <button class="tab" data-view="rankings" id="tab-rankings">Rankings</button>
+    <button class="tab" data-view="list" id="tab-list">Station List</button>
+    <button class="tab" data-view="compare" id="tab-compare">Comparison</button>
+    <button class="tab" data-view="map" id="tab-map">Map</button>
+    <button class="tab" data-view="dist" id="tab-dist">Distribution</button>
+    <button class="tab" data-view="issues" id="tab-issues">Issues</button>
+    <button class="tab" data-view="reporters" id="tab-reporters">Reporters</button>
+    <button class="tab" data-view="import" id="tab-import">Import Data</button>
+    <button class="tab" data-view="icao" id="tab-icao">ICAO Lookup</button>
+    <button class="tab" data-view="settings" id="tab-settings">Settings</button>
+  </nav>
+
+  <main>
+
+    <!-- ── Dashboard ────────────────────────────────────────────────────────── -->
+    <section id="dashboard-view" class="view active" aria-label="Network dashboard">
+      <div class="dash-header">
+        <h2>Network Dashboard</h2>
+      </div>
+
+      <div class="dash-summary">
+        <div class="dash-card dash-card-stations">
+          <span class="dash-card-icon">&#x1F3F0;</span>
+          <div class="dash-card-body">
+            <span class="dash-card-num" id="dash-total-stations">—</span>
+            <span class="dash-card-label">Stations</span>
+          </div>
+        </div>
+        <div class="dash-card dash-card-assessed">
+          <span class="dash-card-icon">&#x2714;&#xFE0F;</span>
+          <div class="dash-card-body">
+            <span class="dash-card-num" id="dash-assessed">—</span>
+            <span class="dash-card-label">Fully Assessed</span>
+          </div>
+        </div>
+        <div class="dash-card dash-card-avg">
+          <span class="dash-card-icon">&#x1F4CA;</span>
+          <div class="dash-card-body">
+            <span class="dash-card-num" id="dash-avg-score">—</span>
+            <span class="dash-card-label" id="dash-avg-label">Avg Composite Score</span>
+          </div>
+        </div>
+        <div class="dash-card dash-card-highrisk">
+          <span class="dash-card-icon">&#x26A0;&#xFE0F;</span>
+          <div class="dash-card-body">
+            <span class="dash-card-num" id="dash-high-risk">—</span>
+            <span class="dash-card-label">High / Very High Risk</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-region-grid" id="dash-region-grid">
+        <div class="dash-panel dash-panel-region" data-region="Western Canada & Mexico">
+          <h3>Suzan — Western Canada & Mexico (Hub: YYC)</h3>
+          <div class="dash-region-summary">
+            <span class="dash-region-stat"><span id="dash-region-w-can-stations">0</span> stations</span>
+            <span class="dash-region-stat"><span id="dash-region-w-can-assessed">0</span> assessed</span>
+            <span class="dash-region-stat dash-region-stat-highrisk"><span id="dash-region-w-can-highrisk">0</span> high
+              risk</span>
+          </div>
+          <div id="dash-region-w-can-list" class="dash-region-station-list"></div>
+          <div id="dash-region-w-can-hazards" class="dash-region-hazards"></div>
+        </div>
+        <div class="dash-panel dash-panel-region" data-region="Central Canada & LATAM">
+          <h3>James — Central Canada & LATAM (Hub: YVR)</h3>
+          <div class="dash-region-summary">
+            <span class="dash-region-stat"><span id="dash-region-cen-can-stations">0</span> stations</span>
+            <span class="dash-region-stat"><span id="dash-region-cen-can-assessed">0</span> assessed</span>
+            <span class="dash-region-stat dash-region-stat-highrisk"><span id="dash-region-cen-can-highrisk">0</span>
+              high risk</span>
+          </div>
+          <div id="dash-region-cen-can-list" class="dash-region-station-list"></div>
+          <div id="dash-region-cen-can-hazards" class="dash-region-hazards"></div>
+        </div>
+        <div class="dash-panel dash-panel-region" data-region="Eastern Canada & Europe & Asia">
+          <h3>Nicole — Eastern Canada & Europe & Asia (Hub: YYZ)</h3>
+          <div class="dash-region-summary">
+            <span class="dash-region-stat"><span id="dash-region-e-can-stations">0</span> stations</span>
+            <span class="dash-region-stat"><span id="dash-region-e-can-assessed">0</span> assessed</span>
+            <span class="dash-region-stat dash-region-stat-highrisk"><span id="dash-region-e-can-highrisk">0</span> high
+              risk</span>
+          </div>
+          <div id="dash-region-e-can-list" class="dash-region-station-list"></div>
+          <div id="dash-region-e-can-hazards" class="dash-region-hazards"></div>
+        </div>
+        <div class="dash-panel dash-panel-region" data-region="US & Caribbean">
+          <h3>Theresa — US & Caribbean (Hub: YEG)</h3>
+          <div class="dash-region-summary">
+            <span class="dash-region-stat"><span id="dash-region-us-stations">0</span> stations</span>
+            <span class="dash-region-stat"><span id="dash-region-us-assessed">0</span> assessed</span>
+            <span class="dash-region-stat dash-region-stat-highrisk"><span id="dash-region-us-highrisk">0</span> high
+              risk</span>
+          </div>
+          <div id="dash-region-us-list" class="dash-region-station-list"></div>
+          <div id="dash-region-us-hazards" class="dash-region-hazards"></div>
+        </div>
+      </div>
+
+      <div id="dash-scale-bar" class="dash-scale-bar" style="display:none">
+        <span class="dash-scale-label">Scale:</span>
+        <span class="dash-scale-seg dash-scale-low">Low ≤ <span id="dash-scale-low-val">—</span></span>
+        <span class="dash-scale-arrow">→</span>
+        <span class="dash-scale-seg dash-scale-med">Med ≤ <span id="dash-scale-med-val">—</span></span>
+        <span class="dash-scale-arrow">→</span>
+        <span class="dash-scale-seg dash-scale-high">High ≤ <span id="dash-scale-high-val">—</span></span>
+        <span class="dash-scale-arrow">→</span>
+        <span class="dash-scale-seg dash-scale-vhigh">Very High &gt; <span id="dash-scale-vhigh-val">—</span></span>
+      </div>
+
+      <div class="filter-bar">
+        <input type="text" id="dash-filter-station" class="filter-input" placeholder="Filter by sp or region">
+        <select id="dash-filter-sp" class="filter-select">
+          <option value="">All Service Providers</option>
+        </select>
+        <select id="dash-filter-region" class="filter-select">
+          <option value="">All Regions</option>
+        </select>
+        <select id="dash-filter-airline" class="filter-select">
+          <option value="">All Airlines</option>
+        </select>
+        <select id="dash-filter-aircraft" class="filter-select">
+          <option value="">All Aircraft</option>
+        </select>
+      </div>
+      <div class="dash-grid-4">
+        <div class="dash-panel dash-panel-a" id="dash-partA-panel">
+          <h3>Part A <span class="dash-part-sub">Airport Infra</span></h3>
+          <div id="dash-partA-list" class="dash-list"></div>
+        </div>
+        <div class="dash-panel dash-panel-b" id="dash-partB-panel">
+          <h3>Part B <span class="dash-part-sub">Service Provider</span></h3>
+          <div id="dash-partB-list" class="dash-list"></div>
+        </div>
+        <div class="dash-panel dash-panel-c" id="dash-partC-panel">
+          <h3>Part C <span class="dash-part-sub">Operational Safety</span></h3>
+          <div id="dash-partC-list" class="dash-list"></div>
+        </div>
+        <div class="dash-panel dash-panel-agg" id="dash-agg-panel">
+          <h3>Aggregate <span class="dash-part-sub" id="dash-agg-sub">Composite</span></h3>
+          <div id="dash-agg-list" class="dash-list"></div>
+        </div>
+      </div>
+
+      <div class="dash-sp-panel dash-panel">
+        <h3>Service Provider Spotlight <span class="dash-part-sub">Part B Comparison</span></h3>
+        <div id="dash-sp-table"></div>
+      </div>
+
+      <div class="dash-grid-2">
+        <div class="dash-panel">
+          <h3>Top Network Hazards</h3>
+          <div id="dash-hazard-list" class="dash-list"></div>
+        </div>
+        <div class="dash-panel">
+          <h3>Proposed Corrective Actions</h3>
+          <div id="dash-action-list" class="dash-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Station Detail ────────────────────────────────────────────────────────── -->
+    <section id="detail-view" class="view" aria-label="Station detail">
+      <div class="detail-header">
+        <button id="detail-back" class="btn btn-secondary" data-view="dashboard">← Back</button>
+        <h2 id="detail-title">Station Detail</h2>
+      </div>
+
+      <div class="detail-layout">
+        <!-- General Info -->
+        <div class="detail-panel detail-panel-info">
+          <h3>General Information</h3>
+          <div id="detail-info" class="detail-info-grid"></div>
+        </div>
+
+        <!-- Score History Chart -->
+        <div class="detail-panel detail-panel-chart">
+          <div class="detail-chart-header">
+            <h3>Risk Score History</h3>
+            <select id="detail-score-select">
+              <option value="agg">Aggregate</option>
+              <option value="partA">Part A</option>
+              <option value="partB">Part B</option>
+              <option value="partC">Part C</option>
+            </select>
+          </div>
+          <div class="chart-container">
+            <canvas id="detail-score-chart"></canvas>
+          </div>
+          <div id="detail-score-empty" class="empty-state" style="display:none;padding:1rem">No score history yet. Save
+            assessments over time to build trend data.</div>
+        </div>
+
+        <!-- Operational History Chart -->
+        <div class="detail-panel detail-panel-chart">
+          <h3>Operational History</h3>
+          <div class="chart-container">
+            <canvas id="detail-op-chart"></canvas>
+          </div>
+          <div id="detail-op-empty" class="empty-state" style="display:none;padding:1rem">No operational history yet.
+          </div>
+        </div>
+
+        <!-- Top Hazards -->
+        <div class="detail-panel detail-panel-hazards">
+          <h3>Top Hazards</h3>
+          <div id="detail-hazards" class="detail-hazards-list"></div>
+        </div>
+
+        <!-- Summary -->
+        <div class="detail-panel detail-panel-summary">
+          <h3>Assessment Summary</h3>
+          <div id="detail-summary" class="detail-summary-grid"></div>
+        </div>
+
+        <!-- Occurrence Reports -->
+        <div class="detail-panel detail-panel-reports">
+          <h3>Occurrence Reports</h3>
+          <div id="detail-reports" class="detail-reports-container"></div>
+          <div class="detail-panel-chart" style="margin-top:1rem">
+            <h4 style="margin:0 0 0.5rem;font-size:0.85rem;color:var(--color-text)">Problem Area Distribution</h4>
+            <div class="chart-container" style="height:180px">
+              <canvas id="detail-concern-chart"></canvas>
+            </div>
+            <div id="detail-concern-empty" class="empty-state" style="display:none;padding:0.5rem">No problem area data
+              for current filter.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Station Input Form ───────────────────────────────────────────────── -->
+    <section id="form-view" class="view" aria-label="Station input form">
+      <div class="form-header">
+        <div class="form-header-left">
+          <select id="station-selector" aria-label="Select station">
+            <option value="new">+ New Station</option>
+          </select>
+          <div class="form-actions">
+            <button id="save-station" class="btn btn-primary">Save Station</button>
+            <button id="delete-station" class="btn btn-danger" style="display:none">Delete</button>
+            <button id="export-json" class="btn btn-secondary">Export JSON</button>
+          </div>
+        </div>
+        <div id="risk-alerts" class="risk-alerts" role="alert" aria-live="polite"></div>
+      </div>
+
+      <div class="form-layout">
+        <!-- Left: Assessment sections -->
+        <div class="form-main">
+
+          <!-- Station details -->
+          <div class="form-section">
+            <h3>Station Details</h3>
+            <div class="field-row-inline">
+              <div class="field-group">
+                <label for="station-name">Station Name</label>
+                <input type="text" id="station-name" placeholder="e.g. Vancouver International">
+              </div>
+              <div class="field-group">
+                <label for="station-iata">IATA Code</label>
+                <input type="text" id="station-iata" maxlength="3" placeholder="e.g. YVR">
+              </div>
+            </div>
+            <div class="field-row-inline">
+              <div class="field-group">
+                <label for="station-airport-name">Airport Name</label>
+                <input type="text" id="station-airport-name" placeholder="e.g. Vancouver International Airport">
+              </div>
+              <div class="field-group">
+                <label for="station-location">Location</label>
+                <input type="text" id="station-location" placeholder="e.g. Richmond, BC">
+              </div>
+            </div>
+            <div class="field-row-inline">
+              <div class="field-group">
+                <label for="station-region">Region</label>
+                <input type="text" id="station-region" placeholder="e.g. Western Canada">
+              </div>
+              <div class="field-group">
+                <label for="station-rm">Regional Manager</label>
+                <input type="text" id="station-rm" placeholder="e.g. Jane Smith">
+              </div>
+              <div class="field-group">
+                <label for="station-advisor">Safety Advisor</label>
+                <input type="text" id="station-advisor" placeholder="e.g. John Doe">
+              </div>
+            </div>
+          </div>
+
+          <!-- Operational Context & Incidents -->
+          <div class="form-section" id="operational-section">
+            <h3>Operational Context &amp; Incidents</h3>
+            <p class="section-desc">Operational data feeds into the <strong>Operational Multiplier
+                (M<sub>op</sub>)</strong>, applied to the final risk score. QCI &lt; 50 or audit findings with
+              "critical"/"major" increase risk; QCI &gt; 90 decreases risk.</p>
+
+            <div class="field-row-inline">
+              <div class="field-group">
+                <label for="op-flight-numbers">Flight Numbers</label>
+                <input type="text" id="op-flight-numbers" placeholder="e.g. 45" inputmode="numeric">
+              </div>
+              <div class="field-group">
+                <label for="op-exposure">Exposure <span class="field-hint">(e.g. passengers/yr)</span></label>
+                <input type="text" id="op-exposure" placeholder="e.g. 250000" inputmode="numeric">
+              </div>
+              <div class="field-group">
+                <label for="op-qci">QCI Score <span class="field-hint">(0–100)</span></label>
+                <input type="text" id="op-qci" placeholder="e.g. 85" inputmode="numeric">
+              </div>
+            </div>
+
+            <div class="field-group" style="margin-top:1rem">
+              <label for="op-audit-findings">Audit Findings &amp; Observations</label>
+              <textarea id="op-audit-findings" rows="3"
+                placeholder="Describe audit findings and observations..."></textarea>
+            </div>
+
+            <div class="field-group" style="margin-top:1rem">
+              <label>Incident Report Trends</label>
+              <p class="field-hint" style="margin:0 0 0.4rem">Search and tag stations with IATA ISIT taxonomy
+                descriptors</p>
+              <div class="autocomplete-wrapper">
+                <input type="text" id="op-incident-search"
+                  placeholder="Search taxonomy (e.g. Ramp, Spillage, Runway)...">
+                <div id="op-incident-results" class="autocomplete-results"></div>
+              </div>
+              <div id="op-incident-tags" class="tag-list"></div>
+              <div id="incident-trend-chart-wrapper" style="margin-top:1.5rem;display:none">
+                <label>Incident Trend Frequency</label>
+                <canvas id="incident-trend-chart" height="120"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Part A -->
+          <div class="form-section" id="partA-section">
+            <h3>
+              <span class="badge badge-a">Part A</span>
+              Airport Infrastructure &amp; Environment
+            </h3>
+            <p class="section-desc">Scores the physical environment of the airport. This sets the <strong>base risk
+                level</strong> that Part B and C then modify.</p>
+            <div class="field-row-inline">
+              <div class="field-group">
+                <label for="partA-date">Assessment Date</label>
+                <input type="date" id="partA-date">
+              </div>
+              <div class="field-group">
+                <label for="partA-status">Status</label>
+                <select id="partA-status">
+                  <option value="not-started">Not Started</option>
+                  <option value="complete">Complete</option>
+                </select>
+              </div>
+            </div>
+            <div id="partA-axes" class="axes-grid"></div>
+          </div>
+
+          <!-- Part B -->
+          <div class="form-section" id="partB-section">
+            <h3>
+              <span class="badge badge-b">Part B</span>
+              Service Provider Capability
+            </h3>
+            <p class="section-desc">Scores each service provider's capability. Acts as a <strong>multiplier on Part
+                A</strong> — a strong SP dampens risk (×&lt;1), a weak SP amplifies it (×&gt;1). Add an entry for each
+              SP serving the station.</p>
+            <div class="partb-entries-bar" id="partb-entries-bar">
+              <span class="partb-entry-tabs" id="partb-entry-tabs"></span>
+              <button type="button" class="btn btn-sm" id="partb-add-entry">+ Add SP</button>
+            </div>
+            <div class="field-row-inline">
+              <div class="field-group">
+                <label for="partb-sp-name">Service Provider</label>
+                <input type="text" id="partb-sp-name" placeholder="e.g. Swissport, Menzies">
+              </div>
+              <div class="field-group">
+                <label for="partb-sp-function">Function</label>
+                <select id="partb-sp-function">
+                  <option value="">— Select —</option>
+                  <option value="PRM">PRM</option>
+                  <option value="ATW">ATW</option>
+                  <option value="BTW">BTW</option>
+                  <option value="Cargo">Cargo</option>
+                  <option value="Water">Water</option>
+                  <option value="Catering">Catering</option>
+                  <option value="Fuel">Fuel</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-row-inline">
+              <div class="field-group">
+                <label for="partB-date">Assessment Date</label>
+                <input type="date" id="partB-date">
+              </div>
+              <div class="field-group">
+                <label for="partB-status">Status</label>
+                <select id="partB-status">
+                  <option value="not-started">Not Started</option>
+                  <option value="complete">Complete</option>
+                </select>
+              </div>
+              <div class="field-group" style="margin-left:auto">
+                <button type="button" class="btn btn-sm btn-danger" id="partb-remove-entry" style="display:none">Remove
+                  Entry</button>
+              </div>
+            </div>
+            <div id="partB-axes" class="axes-grid"></div>
+          </div>
+
+          <!-- Part C -->
+          <div class="form-section" id="partC-section">
+            <h3>
+              <span class="badge badge-c">Part C</span>
+              System Integration Assessment
+            </h3>
+            <p class="section-desc">Scores how well WestJet, the airport, and the SP work together as a system. Acts as
+              a <strong>second multiplier on A×B</strong>. Must be re-reviewed whenever Part B changes (new SP).</p>
+            <div class="field-row-inline">
+              <div class="field-group">
+                <label for="partC-date">Assessment Date</label>
+                <input type="date" id="partC-date">
+              </div>
+              <div class="field-group">
+                <label for="partC-status">Status</label>
+                <select id="partC-status">
+                  <option value="not-started">Not Started</option>
+                  <option value="complete">Complete</option>
+                </select>
+              </div>
+            </div>
+            <div id="partC-axes" class="axes-grid"></div>
+          </div>
+
+        </div><!-- /form-main -->
+
+        <!-- Right: Sidebar -->
+        <div class="form-sidebar">
+
+          <!-- Score Breakdown -->
+          <div class="chart-card breakdown-card">
+            <h3>Score Breakdown</h3>
+            <div id="score-breakdown">
+              <p class="breakdown-empty">Enter Part A scores to see the breakdown.</p>
+            </div>
+          </div>
+
+          <!-- Radar chart -->
+          <div class="chart-card">
+            <h3>Risk Profile</h3>
+            <div class="chart-container">
+              <canvas id="form-chart" aria-label="Risk radar chart"></canvas>
+            </div>
+            <div class="chart-legend">
+              <span class="legend-item"><span class="legend-dot dot-preliminary"></span> Physical (A+B)</span>
+              <span class="legend-item"><span class="legend-dot dot-full"></span> Integration (C)</span>
+            </div>
+          </div>
+
+          <!-- Trend chart -->
+          <div class="chart-card">
+            <h3>Risk Trend</h3>
+            <div id="trend-placeholder" class="trend-placeholder">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                aria-hidden="true">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+              <span>Save assessments over time to see risk trends</span>
+            </div>
+            <div class="chart-container" id="trend-chart-container" style="display:none">
+              <canvas id="trend-chart" aria-label="Risk trend line chart"></canvas>
+            </div>
+          </div>
+
+          <!-- ICAO Safety Context -->
+          <div class="chart-card" id="icao-station-context" style="display:none">
+            <h3>ICAO Safety Context</h3>
+          </div>
+
+        </div><!-- /form-sidebar -->
+      </div><!-- /form-layout -->
+    </section>
+
+    <!-- ── Rankings ─────────────────────────────────────────────────────────── -->
+    <section id="rankings-view" class="view" aria-label="Station risk rankings">
+      <div class="rankings-header">
+        <div>
+          <h2>Station Risk Rankings</h2>
+          <p class="rankings-meta">All stations ranked by final risk score (highest risk first) &mdash; click any row to
+            open</p>
+        </div>
+        <button id="rankings-export-json" class="btn btn-secondary" onclick="exportJSON()">Export JSON</button>
+        <button id="rankings-toggle-normalized" class="btn btn-secondary" title="Show risk rate per 10k flights">Risk
+          Rate</button>
+      </div>
+      <div class="filter-bar">
+        <input type="text" id="rankings-filter-station" class="filter-input" placeholder="Filter by sp or region">
+        <select id="rankings-filter-sp" class="filter-select">
+          <option value="">All Service Providers</option>
+        </select>
+        <select id="rankings-filter-region" class="filter-select">
+          <option value="">All Regions</option>
+        </select>
+        <select id="rankings-filter-airline" class="filter-select">
+          <option value="">All Airlines</option>
+        </select>
+        <select id="rankings-filter-aircraft" class="filter-select">
+          <option value="">All Aircraft</option>
+        </select>
+      </div>
+      <div id="rankings-content"></div>
+    </section>
+
+    <!-- ── Station List ──────────────────────────────────────────────────────── -->
+    <section id="list-view" class="view" aria-label="All stations list">
+      <div class="list-header">
+        <h2>All Stations</h2>
+        <div class="list-actions">
+          <button id="import-excel-btn" class="btn btn-primary" title="Import predefined stations from Excel">Import
+            Excel</button>
+          <button id="refresh-list" class="btn btn-secondary">Refresh</button>
+          <button id="list-export-json" class="btn btn-secondary">Export JSON</button>
+          <button id="toggle-normalized" class="btn btn-secondary" title="Show risk rate per 10k flights">Risk
+            Rate</button>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <input type="text" id="list-filter-station" class="filter-input" placeholder="Filter by sp or region">
+        <select id="list-filter-sp" class="filter-select">
+          <option value="">All Service Providers</option>
+        </select>
+        <select id="list-filter-region" class="filter-select">
+          <option value="">All Regions</option>
+        </select>
+        <select id="list-filter-airline" class="filter-select">
+          <option value="">All Airlines</option>
+        </select>
+        <select id="list-filter-aircraft" class="filter-select">
+          <option value="">All Aircraft</option>
+        </select>
+      </div>
+      <div class="table-wrapper">
+        <table id="stations-table">
+          <thead>
+            <tr>
+              <th data-sort="name">Station</th>
+              <th data-sort="iata">IATA</th>
+              <th data-sort="aScore">A Score</th>
+              <th data-sort="bMult">B Mult</th>
+              <th data-sort="abComposite">A×B</th>
+              <th data-sort="cMult">C Mult</th>
+              <th data-sort="finalScore">Final Score</th>
+              <th data-sort="tier">Tier</th>
+              <th>Status</th>
+              <th>Flags</th>
+            </tr>
+          </thead>
+          <tbody id="stations-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Comparison ────────────────────────────────────────────────────────── -->
+    <section id="compare-view" class="view" aria-label="Station comparison">
+      <div class="compare-header">
+        <h2>Station Comparison</h2>
+        <div class="compare-controls">
+          <select id="compare-stations" multiple size="6" aria-label="Select stations to compare"></select>
+          <button id="compare-btn" class="btn btn-primary">Compare</button>
+        </div>
+      </div>
+      <div class="compare-layout">
+        <div class="compare-chart">
+          <div class="chart-container">
+            <canvas id="compare-chart" aria-label="Comparison radar chart"></canvas>
+          </div>
+          <div id="compare-legend" class="chart-legend"></div>
+        </div>
+        <div class="compare-table-wrapper">
+          <h3>Score Comparison</h3>
+          <div id="compare-tables"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ICAO Lookup ─────────────────────────────────────────────────────────── -->
+    <section id="icao-view" class="view" aria-label="ICAO API lookup">
+      <div class="icao-header">
+        <h2>ICAO API Data Service 2.0</h2>
+        <p class="icao-meta">Access ICAO reference data, aviation safety indicators, State registry information, and
+          USOAP implementation metrics</p>
+      </div>
+
+      <div class="icao-layout">
+        <div class="icao-settings">
+          <div class="icao-card">
+            <h3>API Settings</h3>
+            <div class="field-row">
+              <label for="icao-api-key">API Key</label>
+              <input type="text" id="icao-api-key" placeholder="Enter your ICAO API key">
+            </div>
+            <button id="icao-save-key" class="btn btn-primary">Save Key</button>
+            <button id="icao-clear-key" class="btn btn-secondary">Clear Key</button>
+            <button id="icao-test-key" class="btn btn-secondary" style="margin-top:0.5rem;width:100%">Test API
+              Connection</button>
+            <div id="icao-test-result" style="margin-top:0.5rem;font-size:0.85rem;word-break:break-all"></div>
+            <div id="icao-call-counter"
+              style="margin-top:0.5rem;font-size:0.85rem;display:flex;justify-content:space-between;align-items:center">
+              <span>API calls: <strong id="icao-call-count">0</strong> / 100</span>
+              <button id="icao-reset-calls" class="btn btn-secondary"
+                style="font-size:0.75rem;padding:2px 8px;min-height:auto;min-width:auto">Reset</button>
+            </div>
+            <p class="icao-hint">Get a free API key at <a href="https://dataservices.icao.int/"
+                target="_blank">dataservices.icao.int</a> (100 free trial calls)</p>
+          </div>
+
+          <div class="icao-card">
+            <h3>Recent Lookups</h3>
+            <div id="icao-recent" class="icao-recent">
+              <p class="icao-empty">No lookups yet.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="icao-main">
+          <!-- Search -->
+          <div class="icao-card">
+            <h3>Airport Lookup</h3>
+            <div class="field-row-inline">
+              <div class="field-group">
+                <label for="icao-code-input">ICAO Code (4-letter)</label>
+                <input type="text" id="icao-code-input" maxlength="4" placeholder="e.g. CYVR, KLAX, EGLL">
+              </div>
+              <div class="field-group">
+                <label>&nbsp;</label>
+                <button id="icao-lookup" class="btn btn-primary" style="width:100%">Look Up</button>
+              </div>
+            </div>
+            <div id="icao-lookup-status" class="icao-lookup-status"></div>
+          </div>
+
+          <div id="icao-error" class="icao-error" style="display:none"></div>
+
+          <!-- Airport Info -->
+          <div id="icao-airport-section" style="display:none">
+            <div class="icao-card">
+              <div class="icao-card-header">
+                <h3>Airport Information</h3>
+                <span id="icao-airport-badge" class="icao-source-badge">DOC7910</span>
+              </div>
+              <div id="icao-airport-content"></div>
+              <div id="icao-actions" style="display:none; margin-top: 1rem;">
+                <button id="icao-populate-form" class="btn btn-primary">Populate Station Form</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Airport Safety Profile -->
+          <div id="icao-safety-section" style="display:none">
+            <div class="icao-card">
+              <div class="icao-card-header">
+                <h3>Airport Safety Profile</h3>
+                <span class="icao-source-badge icao-source-badge-safety">Safety</span>
+              </div>
+              <div id="icao-safety-content">
+                <div class="icao-loading">Loading safety characteristics…</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- State Safety Overview -->
+          <div id="icao-state-section" style="display:none">
+            <div class="icao-card">
+              <div class="icao-card-header">
+                <h3>State Safety Overview</h3>
+                <span class="icao-source-badge icao-source-badge-state">USOAP</span>
+              </div>
+              <div id="icao-state-content">
+                <div class="icao-loading">Loading state safety indicators…</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- State Safety Margins -->
+          <div id="icao-margin-section" style="display:none">
+            <div class="icao-card">
+              <div class="icao-card-header">
+                <h3>State Safety Margins</h3>
+                <span class="icao-source-badge icao-source-badge-margin">Margin</span>
+              </div>
+              <div id="icao-margin-content">
+                <div class="icao-loading">Loading safety margins…</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="icao-incidents-section" style="display:none">
+            <div class="icao-card">
+              <div class="icao-card-header">
+                <h3>Incidents</h3>
+                <span class="icao-source-badge">Incidents</span>
+              </div>
+              <div id="icao-incidents-content">
+                <div class="icao-loading">Loading incidents…</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="icao-profile-section" style="display:none">
+            <div class="icao-card">
+              <div class="icao-card-header">
+                <h3>Operator Risk Profile</h3>
+                <span class="icao-source-badge">Profile</span>
+              </div>
+              <div id="icao-profile-content">
+                <div class="icao-loading">Loading risk profile…</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-panel">
+        <h3>Safety Advisors <span class="dash-part-sub">OAPT Report Activity</span></h3>
+        <div id="dash-advisor-list" class="dash-list"></div>
+      </div>
+    </section>
+
+    <!-- ── Map ───────────────────────────────────────────────────────────────── -->
+    <section id="map-view" class="view" aria-label="Station map">
+      <div class="map-header">
+        <h2>Station Map</h2>
+        <div class="map-filters" id="map-filters">
+          <div class="map-filter-group">
+            <label>Mode</label>
+            <select id="map-mode">
+              <option value="risk">Risk Score</option>
+              <option value="risk-oapt">Risk Score (OAPT+SAPT)</option>
+              <option value="risk-hazard">Risk per Hazards</option>
+              <option value="risk-flight">Risk per Flight</option>
+              <option value="risk-log">Log Risk (ln(rate+1))</option>
+              <option value="risk-log-hazard">Log Risk/Hazard</option>
+              <option value="risk-log-flight">Log Risk/Flight</option>
+              <option value="flight-count">Flight Count</option>
+              <option value="issues">Issues (CRS+OAPT)</option>
+            </select>
+          </div>
+          <div class="map-filter-group" id="map-analysis-group">
+            <label>Analysis</label>
+            <select id="map-analysis">
+              <option value="agg">Aggregate</option>
+              <option value="partA">Part A</option>
+              <option value="partB">Part B</option>
+              <option value="partC">Part C</option>
+            </select>
+          </div>
+          <div class="map-filter-group" id="map-sp-group">
+            <label>Service Provider</label>
+            <select id="map-sp">
+              <option value="">All</option>
+            </select>
+          </div>
+          <div class="map-filter-group" id="map-tier-group">
+            <label>Tier</label>
+            <select id="map-tier">
+              <option value="">All</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Very High">Very High</option>
+            </select>
+          </div>
+          <!-- CRS+OAPT filters (issues mode) -->
+          <div class="map-filter-group map-issues-filter" style="display:none">
+            <label>OccType</label>
+            <select id="map-issues-type">
+              <option value="">All</option>
+            </select>
+          </div>
+          <div class="map-filter-group map-issues-filter" style="display:none">
+            <label>Descriptor</label>
+            <select id="map-issues-desc">
+              <option value="">All</option>
+            </select>
+          </div>
+          <div class="map-filter-group map-issues-filter" style="display:none">
+            <label>HFACS L1</label>
+            <select id="map-issues-hfacs">
+              <option value="">All</option>
+            </select>
+          </div>
+          <div class="map-filter-group" id="map-date-from-group">
+            <label>From</label>
+            <input type="date" id="map-issues-date-from" class="map-date-input">
+          </div>
+          <div class="map-filter-group" id="map-date-to-group">
+            <label>To</label>
+            <input type="date" id="map-issues-date-to" class="map-date-input">
+          </div>
+          <div class="map-filter-group" id="map-region-group">
+            <label>Region</label>
+            <select id="map-region">
+              <option value="">All</option>
+            </select>
+          </div>
+          <div class="map-filter-group" id="map-airline-group">
+            <label>Airline</label>
+            <select id="map-airline">
+              <option value="">All</option>
+            </select>
+          </div>
+          <div class="map-filter-group" id="map-aircraft-group">
+            <label>Aircraft</label>
+            <select id="map-aircraft">
+              <option value="">All</option>
+            </select>
+          </div>
+          <div class="map-filter-group">
+            <label>Top</label>
+            <button id="map-top-n" class="btn btn-secondary" style="padding:4px 12px;font-size:0.75rem;min-width:60px">All</button>
+          </div>
+          <div class="map-filter-group">
+            <label>Search</label>
+            <input type="text" id="map-keyword-search" placeholder="Concerns, description..." class="filter-input" style="width:180px;font-size:0.75rem">
+          </div>
+        </div>
+      </div>
+      <div id="map-container"></div>
+      <div class="map-bottom-bar">
+        <div id="map-legend" class="map-legend"></div>
+        <div class="map-stats" id="map-stats"></div>
+      </div>
+      <div id="map-distribution-wrap" style="display:none;margin-top:8px;padding:8px 12px;background:var(--color-card,#fff);border:1px solid var(--color-border,#E5E7EB);border-radius:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span id="map-dist-title" style="font-size:0.8rem;font-weight:600;color:var(--color-text,#1F2937)">Network Distribution</span>
+          <span id="map-dist-stats" style="font-size:0.7rem;color:#6B7280"></span>
+        </div>
+        <div style="position:relative;height:90px">
+          <canvas id="map-dist-chart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Advisor Analysis ──────────────────────────────────────────────────── -->
+    <section id="advisor-view" class="view" aria-label="Advisor analysis">
+      <div class="advisor-header">
+        <button id="advisor-back" class="btn btn-secondary" aria-label="Back">← Back</button>
+        <h2 id="advisor-name"></h2>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem">
+        <label for="advisor-mode" style="font-size:0.75rem;color:var(--color-text-muted)">View:</label>
+        <select id="advisor-mode"
+          style="font-size:0.75rem;padding:2px 6px;border:1px solid var(--color-border);border-radius:4px;background:var(--color-bg);color:var(--color-text)">
+          <option value="imported">Imported by</option>
+          <option value="closed">Closed by</option>
+        </select>
+        <span style="font-size:0.75rem;color:var(--color-text-muted);margin-left:0.5rem">Date:</span>
+        <input type="date" id="advisor-date-from"
+          style="font-size:0.75rem;padding:2px 6px;border:1px solid var(--color-border);border-radius:4px;background:var(--color-bg);color:var(--color-text)">
+        <span style="font-size:0.75rem;color:var(--color-text-muted)">–</span>
+        <input type="date" id="advisor-date-to"
+          style="font-size:0.75rem;padding:2px 6px;border:1px solid var(--color-border);border-radius:4px;background:var(--color-bg);color:var(--color-text)">
+        <button id="advisor-date-reset"
+          style="font-size:0.7rem;padding:2px 8px;border:1px solid var(--color-border);border-radius:4px;background:var(--color-bg);color:var(--color-text);cursor:pointer">Reset</button>
+      </div>
+
+      <div id="advisor-summary" class="advisor-summary"> </div>
+
+      <div class="advisor-layout" style="margin-top:0.75rem">
+        <div class="advisor-card">
+          <h3>Report Type Distribution</h3>
+          <div class="advisor-chart-container">
+            <canvas id="advisor-type-chart"></canvas>
+          </div>
+        </div>
+        <div class="advisor-card">
+          <h3>Location Distribution</h3>
+          <div class="advisor-chart-container">
+            <canvas id="advisor-location-chart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="advisor-card" style="margin-top:1rem">
+        <h3>Monthly Activity</h3>
+        <div class="advisor-chart-container">
+          <canvas id="advisor-timeline-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Reporter profile details (individual only) -->
+      <div id="advisor-reporter-profile" style="display:none;margin-top:1rem">
+        <div class="advisor-layout">
+          <div class="advisor-card">
+            <h3>Stations</h3>
+            <div id="advisor-reporter-stations" class="advisor-reporter-breakdown"></div>
+          </div>
+          <div class="advisor-card">
+            <h3>Types Breakdown</h3>
+            <div id="advisor-reporter-types" class="advisor-reporter-breakdown"></div>
+          </div>
+        </div>
+        <div class="advisor-card" style="margin-top:1rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
+            <h3 style="margin:0">Recent Reports</h3>
+            <span id="advisor-reporter-reports-count" style="font-size:0.75rem;color:var(--color-text-muted)"></span>
+          </div>
+          <div id="advisor-reporter-reports" class="advisor-reporter-reports"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Reporters ──────────────────────────────────────────────────────── -->
+    <section id="reporters-view" class="view" aria-label="Reporters">
+      <h2>Safety Reporters</h2>
+      <p style="font-size:0.8rem;color:var(--color-text-muted);margin-bottom:0.75rem">All reporters across OAPT data — click a name to explore their full analysis</p>
+      <div class="reporters-page-filters">
+        <input type="text" id="reporters-page-search" class="filter-input" placeholder="Search by name or type...">
+        <select id="reporters-page-region" class="filter-select">
+          <option value="">All Regions</option>
+        </select>
+        <span id="reporters-page-count" style="font-size:0.8rem;color:var(--color-text-muted)"></span>
+      </div>
+      <div id="reporters-page-list" class="advisor-reporters-list" style="max-height:calc(100vh - 240px)"></div>
+    </section>
+
+    <!-- ── CRS + OAPT Issues by Region ────────────────────────────────────── -->
+    <section id="issues-view" class="view" aria-label="CRS OAPT Issues by Region">
+      <div class="dash-panel dash-issues-panel">
+        <h3>Issues by Region <span class="dash-part-sub">CRS + OAPT merged data — filter by type</span></h3>
+        <div class="dash-issues-filters">
+          <select id="dash-issues-type" class="filter-select">
+            <option value="">All Types</option>
+          </select>
+          <select id="dash-issues-descriptor" class="filter-select">
+            <option value="">All Descriptors</option>
+          </select>
+          <select id="dash-issues-hfacs" class="filter-select">
+            <option value="">All HFACS L1</option>
+          </select>
+          <select id="dash-issues-station" class="filter-select">
+            <option value="">All Stations</option>
+          </select>
+          <label class="dash-issues-date-label" style="font-size:0.7rem;color:var(--color-text-muted);white-space:nowrap">From</label>
+          <input type="date" id="dash-issues-date-from" class="filter-input" style="width:130px">
+          <label class="dash-issues-date-label" style="font-size:0.7rem;color:var(--color-text-muted);white-space:nowrap">To</label>
+          <input type="date" id="dash-issues-date-to" class="filter-input" style="width:130px">
+          <input type="text" id="dash-issues-search" class="filter-input" placeholder="Search concerns or description...">
+          <span class="dash-issues-count" id="dash-issues-total">0 records</span>
+        </div>
+        <div class="dash-issues-regions" id="dash-issues-regions"></div>
+        <div class="dash-grid-2" style="margin-top:0.75rem">
+          <div class="dash-panel" style="box-shadow:none;padding:0.75rem">
+            <h4 style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;color:var(--color-text)">Issue Type Distribution <span style="font-weight:400;color:var(--color-text-muted)">(click to filter all)</span></h4>
+            <div class="chart-container" style="height:220px">
+              <canvas id="dash-issues-type-chart"></canvas>
+            </div>
+          </div>
+          <div class="dash-panel" style="box-shadow:none;padding:0.75rem">
+            <h4 style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;color:var(--color-text)">Top Concerns</h4>
+            <div id="dash-issues-concerns" class="dash-list"></div>
+          </div>
+        </div>
+        <div class="dash-issues-active-filters" id="dash-issues-active-filters" style="display:none;margin-top:0.75rem;padding:0.4rem 0.75rem;background:var(--color-bg-alt, #f3f4f6);border-radius:6px;font-size:0.75rem;color:var(--color-text-muted);align-items:center;gap:0.5rem;flex-wrap:wrap">
+          <span style="font-weight:600;color:var(--color-text)">Filters:</span>
+          <span id="dash-issues-filter-region"></span>
+          <span id="dash-issues-filter-type"></span>
+        </div>
+        <div class="dash-grid-2" style="margin-top:0.75rem">
+          <div class="dash-panel" style="box-shadow:none;padding:0.75rem">
+            <h4 style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;color:var(--color-text)">Descriptor Set <span style="font-weight:400;color:var(--color-text-muted)">(click to drill down)</span></h4>
+            <div class="chart-container" style="height:280px">
+              <canvas id="dash-issues-descset-chart"></canvas>
+            </div>
+          </div>
+          <div class="dash-panel" style="box-shadow:none;padding:0.75rem">
+            <h4 style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;color:var(--color-text)">Level 1 <span id="dash-issues-l1-context" style="font-weight:400;color:var(--color-text-muted)"></span></h4>
+            <div class="chart-container" style="height:280px">
+              <canvas id="dash-issues-l1-chart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="dash-grid-2" style="margin-top:0.75rem">
+          <div class="dash-panel" style="box-shadow:none;padding:0.75rem">
+            <h4 style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;color:var(--color-text)">Level 2 <span id="dash-issues-l2-context" style="font-weight:400;color:var(--color-text-muted)"></span></h4>
+            <div class="chart-container" style="height:260px">
+              <canvas id="dash-issues-l2-chart"></canvas>
+            </div>
+          </div>
+          <div class="dash-panel" style="box-shadow:none;padding:0.75rem">
+            <h4 style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;color:var(--color-text)">HFACS Categories</h4>
+            <div class="chart-container" style="height:260px">
+              <canvas id="dash-issues-hfacs-chart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="dash-issues-occ-list" style="margin-top:0.75rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
+            <h4 style="font-size:0.8rem;font-weight:600;color:var(--color-text);margin:0">
+              Occurrences <span id="dash-issues-occ-type-badge" style="display:none" class="dash-issues-occ-badge"></span>
+            </h4>
+            <span id="dash-issues-occ-count" style="font-size:0.75rem;color:var(--color-text-muted)"></span>
+          </div>
+          <div id="dash-issues-occ-list" class="dash-issues-occ-table-wrap"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Import Data ──────────────────────────────────────────────────── -->
+    <section id="import-view" class="view" aria-label="Import Data">
+      <h2>Import Data Files</h2>
+      <p style="font-size:0.8rem;color:var(--color-text-muted);margin-bottom:1rem">
+        Upload updated Excel files to regenerate all data. The system processes files server-side and updates all views.
+      </p>
+
+      <div class="import-zones">
+        <div class="import-zone" id="import-zone-profile">
+          <div class="import-zone-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+          </div>
+          <h3>Airport Safety Risk Profile</h3>
+          <p class="import-zone-desc">Station risk scores (Part A, B, C)</p>
+          <label class="import-zone-btn" for="upload-profile">Choose File</label>
+          <input type="file" id="upload-profile" accept=".xlsx,.xls,.csv" class="import-file-input" data-type="profile">
+          <div class="import-zone-status" id="status-profile"></div>
+        </div>
+
+        <div class="import-zone" id="import-zone-crs">
+          <div class="import-zone-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <h3>Group Safety CRS Report</h3>
+          <p class="import-zone-desc">Occurrence details and descriptors</p>
+          <label class="import-zone-btn" for="upload-crs">Choose File</label>
+          <input type="file" id="upload-crs" accept=".xlsx,.xls,.csv" class="import-file-input" data-type="crs">
+          <div class="import-zone-status" id="status-crs"></div>
+        </div>
+
+        <div class="import-zone" id="import-zone-oapt">
+          <div class="import-zone-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><path d="M12 18v-6"/><path d="M9 15l3 3 3-3"/></svg>
+          </div>
+          <h3>OAPT Occurrence Report</h3>
+          <p class="import-zone-desc">OAPT reports (Excel or CSV)</p>
+          <label class="import-zone-btn" for="upload-oapt">Choose File</label>
+          <input type="file" id="upload-oapt" accept=".xlsx,.xls,.csv" class="import-file-input" data-type="oapt">
+          <div class="import-zone-status" id="status-oapt"></div>
+        </div>
+        <div class="import-zone" id="import-zone-flight">
+          <div class="import-zone-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4z"/></svg>
+          </div>
+          <h3>Flight Counts</h3>
+          <p class="import-zone-desc">Flight volume by station and date</p>
+          <label class="import-zone-btn" for="upload-flight">Choose File</label>
+          <input type="file" id="upload-flight" accept=".xlsx,.xls,.csv" class="import-file-input" data-type="flight">
+          <div class="import-zone-status" id="status-flight"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:1rem;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">
+        <button id="import-upload-btn" class="btn btn-primary" disabled>Upload & Process</button>
+        <button id="import-clear-btn" class="btn btn-secondary">Clear</button>
+        <span id="import-global-status" style="font-size:0.8rem;color:var(--color-text-muted)"></span>
+      </div>
+
+      <div id="import-progress" class="import-progress" style="display:none;margin-top:1rem">
+        <div class="import-progress-header">
+          <span id="import-progress-label">Uploading...</span>
+          <span id="import-progress-pct">0%</span>
+        </div>
+        <div class="import-progress-track">
+          <div id="import-progress-bar" class="import-progress-bar"></div>
+        </div>
+        <div id="import-progress-step" class="import-progress-step"></div>
+      </div>
+
+      <div id="import-log" class="import-log" style="display:none;margin-top:1rem"></div>
+    </section>
+
+    <!-- ── Network Distribution ──────────────────────────────────────────────── -->
+    <section id="dist-view" class="view" aria-label="Network Distribution">
+      <div class="dash-header">
+        <h2>Network Distribution</h2>
+        <span class="dash-part-sub">All distribution charts across the network</span>
+      </div>
+
+      <div class="dash-issues-filters" style="margin-bottom:1rem">
+        <div style="display:flex;align-items:center;gap:6px">
+          <label style="font-size:0.7rem;color:#6b7280">From</label>
+          <input type="date" id="dist-date-from" class="filter-input" style="width:140px">
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <label style="font-size:0.7rem;color:#6b7280">To</label>
+          <input type="date" id="dist-date-to" class="filter-input" style="width:140px">
+        </div>
+        <select id="dist-region" class="filter-select">
+          <option value="">All Regions</option>
+        </select>
+        <select id="dist-airline" class="filter-select">
+          <option value="">All Airlines</option>
+        </select>
+        <select id="dist-aircraft" class="filter-select">
+          <option value="">All Aircraft</option>
+        </select>
+        <button id="dist-apply" class="btn btn-primary" style="padding:6px 16px;font-size:0.8rem">Apply</button>
+      </div>
+
+      <div id="dist-charts" style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem"></div>
+    </section>
+
+    <!-- ── Settings ──────────────────────────────────────────────────────────── -->
+    <section id="settings-view" class="view" aria-label="Settings">
+      <div class="dash-header">
+        <h2>Settings</h2>
+      </div>
+
+      <div class="settings-section">
+        <h3>App Title</h3>
+        <div class="settings-form-row">
+          <label>Title</label>
+          <input type="text" id="settings-title" placeholder="Station Risk Scoring Model" class="settings-input">
+        </div>
+        <div class="settings-form-row">
+          <label>Subtitle</label>
+          <input type="text" id="settings-subtitle" placeholder="WestJet Group Safety" class="settings-input">
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Regions</h3>
+        <p class="settings-desc">Rename regions or assign stations by dragging them between regions.</p>
+        <div id="settings-regions"></div>
+        <div style="margin-top:1rem">
+          <button id="settings-add-region" class="btn btn-secondary">Add Region</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Composed Regions</h3>
+        <p class="settings-desc">Group sub-regions into composed regions. When composed regions exist, they replace flat regions in all views (Map, Issues, Distribution, etc.).</p>
+        <div id="settings-composed-regions"></div>
+        <div style="margin-top:1rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+          <input type="text" id="composed-region-name" class="settings-input" placeholder="New composed region name..." style="max-width:260px">
+          <button id="settings-add-composed" class="btn btn-secondary">Add Composed Region</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Risk Priority Index Formula</h3>
+        <p class="settings-desc">Configure the formula used to combine assessment scores, flight exposure, and reporting risk into a single priority index.</p>
+        <div class="settings-form-row">
+          <label>Formula</label>
+          <select id="settings-rpi-formula" class="settings-input" style="max-width:420px">
+            <option value="option1">Option 1 – Normalize first, then scale for exposure</option>
+            <option value="option2">Option 2 – Calculate total risk, then compare to network</option>
+          </select>
+        </div>
+        <div class="settings-form-row">
+          <label>Weight A</label>
+          <input type="number" id="settings-weight-a" class="settings-input" style="max-width:100px" step="0.01" min="0" max="1" placeholder="0.25">
+          <span class="settings-desc" style="margin:0">Airport Authority assessment</span>
+        </div>
+        <div class="settings-form-row">
+          <label>Weight B</label>
+          <input type="number" id="settings-weight-b" class="settings-input" style="max-width:100px" step="0.01" min="0" max="1" placeholder="0.25">
+          <span class="settings-desc" style="margin:0">Service Provider assessment</span>
+        </div>
+        <div class="settings-form-row">
+          <label>Weight C</label>
+          <input type="number" id="settings-weight-c" class="settings-input" style="max-width:100px" step="0.01" min="0" max="1" placeholder="0.25">
+          <span class="settings-desc" style="margin:0">Combined assessment</span>
+        </div>
+        <div class="settings-form-row">
+          <label>Weight R</label>
+          <input type="number" id="settings-weight-r" class="settings-input" style="max-width:100px" step="0.01" min="0" max="1" placeholder="0.25">
+          <span class="settings-desc" style="margin:0">Incident reporting risk</span>
+        </div>
+      </div>
+
+      <div style="margin-top:1.5rem;display:flex;gap:0.75rem;align-items:center">
+        <button id="settings-save" class="btn btn-primary">Save Settings</button>
+        <button id="settings-reset" class="btn btn-secondary">Reset to Defaults</button>
+        <span id="settings-status" style="font-size:0.8rem;color:var(--color-text-muted)"></span>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+
+</html>

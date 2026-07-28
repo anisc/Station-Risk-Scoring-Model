@@ -1,0 +1,8 @@
+.DS_Store
+__pycache__/
+*.pyc
+*.xlsx
+*.csv
+*.csv.bak
+node_modules/
+server.js

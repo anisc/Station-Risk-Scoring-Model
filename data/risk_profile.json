@@ -1,0 +1,3012 @@
+{
+  "AMS": {
+    "asrm": "Yes",
+    "region": "",
+    "partC": {
+      "total": 0,
+      "axes": {
+        "2.0 Environment & Operating Context": "medium",
+        "3.1 Standards, Procedures & Training (WestJet)": "Low",
+        "3.2 Operational Support & Setup (WestJet)": "Low",
+        "3.3 Safety Management, Coordination & Oversight (WestJet)": "Low",
+        "4.1 Standards, Procedures & Training (Service Provider)": "Low",
+        "4.2 Safety Management, Assurance & Risk Monitoring (Service Provider)": "Low",
+        "4.3 Roles, Accountability & Coordination (Service Provider)": "Low",
+        "4.4 Staffing, Equipment & Capacity (Service Provider)": "Low",
+        "5.1 Supervisory Presence & Oversight": "Low",
+        "5.2 Planning & Priority Management": "Low",
+        "5.3 Managing Known Issues": "Low",
+        "6.1 Communication & Team Coordination": "Low",
+        "6.2 Workload & Time Pressure": "Low",
+        "7.2 Task Performance": "Low"
+      },
+      "hazards": [
+        "Baggage System",
+        "AGDS failures and SOP",
+        "Lack of High Wind Program",
+        "Aircraft Taxiing",
+        "IHR Process"
+      ]
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "Low",
+        "2.2.1 Environment": "Medium",
+        "2.2.2 Tenant Management": "Low",
+        "2.2.3 Emergency Response": "Low",
+        "2.3 Terminal Construction & Temporary Conditions": "Low",
+        "3.0 Groundside & Airport Access": "Low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Low",
+        "4.2 Baggage Induction at Check-in": "Low",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "Low",
+        "5.2 Bag Room Operations Environment": "Low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Medium",
+        "6.1 Boarding Lounge & Gate Area": "Low",
+        "6.2 Gate & Boarding Bridge Operations": "Low",
+        "6.3 Passenger Transport / Remote Stand Operations": "Low",
+        "7.1 Stand Layout, Markings & Clearances": "Low",
+        "7.2 Parking Guidance — Arrival & Departure": "Medium",
+        "7.3 Stand Services & GSE Staging": "Low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "Low",
+        "8.1 Potable Water Servicing Infrastructure": "Low",
+        "8.2 Fueling Infrastructure": "Low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "N/A"
+      },
+      "hazards": [
+        "Lack of High Wind Program",
+        "Baggage System",
+        "AGDS failures and SOP"
+      ]
+    }
+  },
+  "ANC": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "ANU": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "ATL": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "AUA": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "AUS": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "AZS": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "BCN": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "BGI": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "BNA": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "BON": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "BOS": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "low",
+        "2.2.1 Environment": "low",
+        "2.2.2 Tenant Management": "Low",
+        "2.2.3 Emergency Response": "Low",
+        "2.3 Terminal Construction & Temporary Conditions": "Low",
+        "3.0 Groundside & Airport Access": "Low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Low",
+        "4.2 Baggage Induction at Check-in": "Low",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "Low",
+        "5.2 Bag Room Operations Environment": "Low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Low",
+        "6.1 Boarding Lounge & Gate Area": "Low",
+        "6.2 Gate & Boarding Bridge Operations": "Low",
+        "6.3 Passenger Transport / Remote Stand Operations": "Low",
+        "7.1 Stand Layout, Markings & Clearances": "Medium",
+        "7.2 Parking Guidance — Arrival & Departure": "Low",
+        "7.3 Stand Services & GSE Staging": "Medium",
+        "7.4 Vehicle Service Roads & Apron Traffic": "Medium",
+        "8.1 Potable Water Servicing Infrastructure": "Low",
+        "8.2 Fueling Infrastructure": "Low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "N/A"
+      },
+      "hazards": [
+        "Gate availability",
+        "GSE Congestion",
+        "Busy vehicle corridor"
+      ]
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {
+        "2.0 Environment & Operating Context": "medium",
+        "3.1 Standards, Procedures & Training (WestJet)": "medium",
+        "3.2 Operational Support & Setup (WestJet)": "medium",
+        "3.3 Safety Management, Coordination & Oversight (WestJet)": "medium",
+        "4.1 Standards, Procedures & Training (Service Provider)": "high",
+        "4.2 Safety Management, Assurance & Risk Monitoring (Service Provider)": "high",
+        "4.3 Roles, Accountability & Coordination (Service Provider)": "high",
+        "4.4 Staffing, Equipment & Capacity (Service Provider)": "low",
+        "5.1 Supervisory Presence & Oversight": "low",
+        "5.2 Planning & Priority Management": "medium",
+        "5.3 Managing Known Issues": "high",
+        "6.1 Communication & Team Coordination": "low",
+        "6.2 Workload & Time Pressure": "low",
+        "7.2 Task Performance": "medium"
+      },
+      "hazards": [
+        "Staff training",
+        "Failure to Correct known Problems",
+        "Lack of SP Oversight"
+      ]
+    }
+  },
+  "BZE": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "CDG": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "Low",
+        "2.2.1 Environment": "Low",
+        "2.2.2 Tenant Management": "Low",
+        "2.2.3 Emergency Response": "Low",
+        "2.3 Terminal Construction & Temporary Conditions": "Low",
+        "3.0 Groundside & Airport Access": "Low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Low",
+        "4.2 Baggage Induction at Check-in": "Low",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "Low",
+        "5.2 Bag Room Operations Environment": "Low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Low",
+        "6.1 Boarding Lounge & Gate Area": "Medium",
+        "6.2 Gate & Boarding Bridge Operations": "Low",
+        "6.3 Passenger Transport / Remote Stand Operations": "Low",
+        "7.1 Stand Layout, Markings & Clearances": "Low",
+        "7.2 Parking Guidance — Arrival & Departure": "Low",
+        "7.3 Stand Services & GSE Staging": "Low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "Low",
+        "8.1 Potable Water Servicing Infrastructure": "Low",
+        "8.2 Fueling Infrastructure": "Low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "Low"
+      },
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {
+        "2.1 Safety Governance": "Medium",
+        "3.0 Organizational Strucutre & Staffing": "Low",
+        "4.1 Service Provider Training": "Low",
+        "5.1 Procedural Framework & Alignment": "Low",
+        "5.2 Potable Water Servicing": "low",
+        "5.3  Load Control & Loading": "low",
+        "5.4 Emergency Response Procedures": "low",
+        "6.1 GSE Program": "Low"
+      },
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {
+        "2.0 Environment & Operating Context": "Medium",
+        "3.1 Standards, Procedures & Training (WestJet)": "medium",
+        "3.2 Operational Support & Setup (WestJet)": "Low",
+        "3.3 Safety Management, Coordination & Oversight (WestJet)": "Low",
+        "4.1 Standards, Procedures & Training (Service Provider)": "Low",
+        "4.2 Safety Management, Assurance & Risk Monitoring (Service Provider)": "Medium",
+        "4.3 Roles, Accountability & Coordination (Service Provider)": "Low",
+        "4.4 Staffing, Equipment & Capacity (Service Provider)": "Low",
+        "5.1 Supervisory Presence & Oversight": "Low",
+        "5.2 Planning & Priority Management": "Low",
+        "5.3 Managing Known Issues": "Low",
+        "6.1 Communication & Team Coordination": "Low",
+        "6.2 Workload & Time Pressure": "Low",
+        "7.2 Task Performance": "Low"
+      },
+      "hazards": [
+        "Passenger Congestion",
+        "Safety Reporting",
+        "SMS Integration",
+        "SOP coordination"
+      ]
+    }
+  },
+  "CPH": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "Low",
+        "2.2.1 Environment": "Low",
+        "2.2.2 Tenant Management": "Low",
+        "2.2.3 Emergency Response": "Low",
+        "2.3 Terminal Construction & Temporary Conditions": "Low",
+        "3.0 Groundside & Airport Access": "Low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Low",
+        "4.2 Baggage Induction at Check-in": "Low",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "Medium",
+        "5.2 Bag Room Operations Environment": "Low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Low",
+        "6.1 Boarding Lounge & Gate Area": "Low",
+        "6.2 Gate & Boarding Bridge Operations": "Low",
+        "6.3 Passenger Transport / Remote Stand Operations": "Low",
+        "7.1 Stand Layout, Markings & Clearances": "Low",
+        "7.2 Parking Guidance — Arrival & Departure": "Low",
+        "7.3 Stand Services & GSE Staging": "Low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "Low",
+        "8.1 Potable Water Servicing Infrastructure": "Low",
+        "8.2 Fueling Infrastructure": "Low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "Low"
+      },
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {
+        "2.0 Environment & Operating Context": "Low",
+        "3.1 Standards, Procedures & Training (WestJet)": "Medium",
+        "3.2 Operational Support & Setup (WestJet)": "Low",
+        "3.3 Safety Management, Coordination & Oversight (WestJet)": "Low",
+        "4.1 Standards, Procedures & Training (Service Provider)": "Low",
+        "4.2 Safety Management, Assurance & Risk Monitoring (Service Provider)": "Low",
+        "4.3 Roles, Accountability & Coordination (Service Provider)": "Low",
+        "4.4 Staffing, Equipment & Capacity (Service Provider)": "Low",
+        "5.1 Supervisory Presence & Oversight": "Low",
+        "5.2 Planning & Priority Management": "Low",
+        "5.3 Managing Known Issues": "Low",
+        "6.1 Communication & Team Coordination": "Low",
+        "6.2 Workload & Time Pressure": "Low",
+        "7.2 Task Performance": "Low"
+      },
+      "hazards": []
+    }
+  },
+  "CUN": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "CUR": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "CWL": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "Low",
+        "2.2.1 Environment": "Low",
+        "2.2.2 Tenant Management": "Low",
+        "2.2.3 Emergency Response": "Low",
+        "2.3 Terminal Construction & Temporary Conditions": "Low",
+        "3.0 Groundside & Airport Access": "Low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Low",
+        "4.2 Baggage Induction at Check-in": "Low",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "Low",
+        "5.2 Bag Room Operations Environment": "Low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Low",
+        "6.1 Boarding Lounge & Gate Area": "Low",
+        "6.2 Gate & Boarding Bridge Operations": "Low",
+        "6.3 Passenger Transport / Remote Stand Operations": "Low",
+        "7.1 Stand Layout, Markings & Clearances": "Low",
+        "7.2 Parking Guidance — Arrival & Departure": "Low",
+        "7.3 Stand Services & GSE Staging": "Low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "Low",
+        "8.1 Potable Water Servicing Infrastructure": "Low",
+        "8.2 Fueling Infrastructure": "Low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "Low"
+      },
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "CZM": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "DEN": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "DFW": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "DTW": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "DUB": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "Low",
+        "2.2.1 Environment": "Low",
+        "2.2.2 Tenant Management": "Low",
+        "2.2.3 Emergency Response": "Low",
+        "2.3 Terminal Construction & Temporary Conditions": "Low",
+        "3.0 Groundside & Airport Access": "Low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Low",
+        "4.2 Baggage Induction at Check-in": "Low",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "Low",
+        "5.2 Bag Room Operations Environment": "Low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Low",
+        "6.1 Boarding Lounge & Gate Area": "Low",
+        "6.2 Gate & Boarding Bridge Operations": "N/A",
+        "6.3 Passenger Transport / Remote Stand Operations": "Medium",
+        "7.1 Stand Layout, Markings & Clearances": "Low",
+        "7.2 Parking Guidance — Arrival & Departure": "Low",
+        "7.3 Stand Services & GSE Staging": "Low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "Low",
+        "8.1 Potable Water Servicing Infrastructure": "Low",
+        "8.2 Fueling Infrastructure": "Low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "Low"
+      },
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "EDI": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "low",
+        "2.2.1 Environment": "low",
+        "2.2.2 Tenant Management": "low",
+        "2.2.3 Emergency Response": "low",
+        "2.3 Terminal Construction & Temporary Conditions": "low",
+        "3.0 Groundside & Airport Access": "low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Very high",
+        "4.2 Baggage Induction at Check-in": "Medium",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "Low",
+        "5.2 Bag Room Operations Environment": "Low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Low",
+        "6.1 Boarding Lounge & Gate Area": "Medium",
+        "6.2 Gate & Boarding Bridge Operations": "Low",
+        "6.3 Passenger Transport / Remote Stand Operations": "Low",
+        "7.1 Stand Layout, Markings & Clearances": "Low",
+        "7.2 Parking Guidance — Arrival & Departure": "Low",
+        "7.3 Stand Services & GSE Staging": "Low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "Low",
+        "8.1 Potable Water Servicing Infrastructure": "Low",
+        "8.2 Fueling Infrastructure": "High",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "N/A"
+      },
+      "hazards": [
+        "Check-in Congestion",
+        "Refueling",
+        "Leadership Availability?"
+      ]
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "FCO": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "FLL": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "GCM": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "GDL": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "GLA": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "Low",
+        "2.2.1 Environment": "Low",
+        "2.2.2 Tenant Management": "Low",
+        "2.2.3 Emergency Response": "Low",
+        "2.3 Terminal Construction & Temporary Conditions": "Low",
+        "3.0 Groundside & Airport Access": "Low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Low",
+        "4.2 Baggage Induction at Check-in": "Medium",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "Medium",
+        "5.2 Bag Room Operations Environment": "Low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Low",
+        "6.1 Boarding Lounge & Gate Area": "Medium",
+        "6.2 Gate & Boarding Bridge Operations": "Medium",
+        "6.3 Passenger Transport / Remote Stand Operations": "Low",
+        "7.1 Stand Layout, Markings & Clearances": "Low",
+        "7.2 Parking Guidance — Arrival & Departure": "Low",
+        "7.3 Stand Services & GSE Staging": "Low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "Low",
+        "8.1 Potable Water Servicing Infrastructure": "Low",
+        "8.2 Fueling Infrastructure": "Low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "Low"
+      },
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {
+        "2.0 Environment & Operating Context": "Low",
+        "3.1 Standards, Procedures & Training (WestJet)": "Low",
+        "3.2 Operational Support & Setup (WestJet)": "Low",
+        "3.3 Safety Management, Coordination & Oversight (WestJet)": "Low",
+        "4.1 Standards, Procedures & Training (Service Provider)": "Medium",
+        "4.2 Safety Management, Assurance & Risk Monitoring (Service Provider)": "Low",
+        "4.3 Roles, Accountability & Coordination (Service Provider)": "Low",
+        "4.4 Staffing, Equipment & Capacity (Service Provider)": "Low",
+        "5.1 Supervisory Presence & Oversight": "Low",
+        "5.2 Planning & Priority Management": "Low",
+        "5.3 Managing Known Issues": "Low",
+        "6.1 Communication & Team Coordination": "Low",
+        "6.2 Workload & Time Pressure": "Low",
+        "7.2 Task Performance": "Low"
+      },
+      "hazards": [
+        "Leadership Gaps",
+        "Passenger Congestion",
+        "SMS Reporting",
+        "Procedural inconsistencies"
+      ]
+    }
+  },
+  "GND": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "HAV": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "HNL": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "HUX": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "IAD": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "IAH": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "low",
+        "2.2.1 Environment": "Low",
+        "2.2.2 Tenant Management": "Low",
+        "2.2.3 Emergency Response": "Low",
+        "2.3 Terminal Construction & Temporary Conditions": "Low",
+        "3.0 Groundside & Airport Access": "Low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Medium",
+        "4.2 Baggage Induction at Check-in": "Medium",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "Low",
+        "5.2 Bag Room Operations Environment": "Low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Low",
+        "6.1 Boarding Lounge & Gate Area": "Low",
+        "6.2 Gate & Boarding Bridge Operations": "Low",
+        "6.3 Passenger Transport / Remote Stand Operations": "Low",
+        "7.1 Stand Layout, Markings & Clearances": "Low",
+        "7.2 Parking Guidance — Arrival & Departure": "Low",
+        "7.3 Stand Services & GSE Staging": "Medium",
+        "7.4 Vehicle Service Roads & Apron Traffic": "Low",
+        "8.1 Potable Water Servicing Infrastructure": "Low",
+        "8.2 Fueling Infrastructure": "Low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "Low"
+      },
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "ICN": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "JFK": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "KEF": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "KIN": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "KOA": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "LAS": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "LAX": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "LGW": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "LHR": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "LIH": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "LIR": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "LIS": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "Low",
+        "2.2.1 Environment": "Low",
+        "2.2.2 Tenant Management": "Low",
+        "2.2.3 Emergency Response": "Low",
+        "2.3 Terminal Construction & Temporary Conditions": "Low",
+        "3.0 Groundside & Airport Access": "Low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Medium",
+        "4.2 Baggage Induction at Check-in": "Low",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "Low",
+        "5.2 Bag Room Operations Environment": "Low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Low",
+        "6.1 Boarding Lounge & Gate Area": "Low",
+        "6.2 Gate & Boarding Bridge Operations": "Low",
+        "6.3 Passenger Transport / Remote Stand Operations": "Medium",
+        "7.1 Stand Layout, Markings & Clearances": "Low",
+        "7.2 Parking Guidance — Arrival & Departure": "Low",
+        "7.3 Stand Services & GSE Staging": "Low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "Low",
+        "8.1 Potable Water Servicing Infrastructure": "Low",
+        "8.2 Fueling Infrastructure": "Low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "N/A"
+      },
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {
+        "2.0 Environment & Operating Context": "Medium",
+        "3.1 Standards, Procedures & Training (WestJet)": "Low",
+        "3.2 Operational Support & Setup (WestJet)": "Low",
+        "3.3 Safety Management, Coordination & Oversight (WestJet)": "Low",
+        "4.1 Standards, Procedures & Training (Service Provider)": "Low",
+        "4.2 Safety Management, Assurance & Risk Monitoring (Service Provider)": "Medium",
+        "4.3 Roles, Accountability & Coordination (Service Provider)": "Low",
+        "4.4 Staffing, Equipment & Capacity (Service Provider)": "Medium",
+        "5.1 Supervisory Presence & Oversight": "Low",
+        "5.2 Planning & Priority Management": "Low",
+        "5.3 Managing Known Issues": "Low",
+        "6.1 Communication & Team Coordination": "Low",
+        "6.2 Workload & Time Pressure": "Low",
+        "7.2 Task Performance": "Medium"
+      },
+      "hazards": []
+    }
+  },
+  "LTO": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "MAD": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "Low",
+        "2.2.1 Environment": "Low",
+        "2.2.2 Tenant Management": "Low",
+        "2.2.3 Emergency Response": "Low",
+        "2.3 Terminal Construction & Temporary Conditions": "Low",
+        "3.0 Groundside & Airport Access": "Low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Low",
+        "4.2 Baggage Induction at Check-in": "Low",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "Low",
+        "5.2 Bag Room Operations Environment": "Low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Medium",
+        "6.1 Boarding Lounge & Gate Area": "Low",
+        "6.2 Gate & Boarding Bridge Operations": "Very High",
+        "6.3 Passenger Transport / Remote Stand Operations": "Low",
+        "7.1 Stand Layout, Markings & Clearances": "Low",
+        "7.2 Parking Guidance — Arrival & Departure": "Low",
+        "7.3 Stand Services & GSE Staging": "Low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "Low",
+        "8.1 Potable Water Servicing Infrastructure": "Low",
+        "8.2 Fueling Infrastructure": "Low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "N/A"
+      },
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "MBJ": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "MCO": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "MEX": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "MID": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "MSP": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "MZT": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "NAS": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "NRT": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "OGG": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "ORD": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "PBI": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "PDL": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "PDX": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "PHX": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "PLS": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "POP": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "PSP": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "PTY": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "PUJ": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "PVR": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "PXM": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "RDU": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "RSW": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "RTB": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "SAN": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "SEA": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "SFO": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "SJD": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "SJU": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "SLC": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "SNA": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "SXM": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "TPA": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "TPQ": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "TQO": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "UVF": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "VRA": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.2.2 Tenant Management": "Low",
+        "2.2.3 Emergency Response": "Low",
+        "2.3 Terminal Construction & Temporary Conditions": "Low",
+        "3.0 Groundside & Airport Access": "Low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Low",
+        "4.2 Baggage Induction at Check-in": "Low",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "Low",
+        "5.2 Bag Room Operations Environment": "Low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Low",
+        "6.1 Boarding Lounge & Gate Area": "Low",
+        "6.2 Gate & Boarding Bridge Operations": "Low",
+        "6.3 Passenger Transport / Remote Stand Operations": "Low",
+        "7.1 Stand Layout, Markings & Clearances": "Medium",
+        "7.2 Parking Guidance — Arrival & Departure": "Low",
+        "7.3 Stand Services & GSE Staging": "Low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "Low",
+        "8.1 Potable Water Servicing Infrastructure": "Medium",
+        "8.2 Fueling Infrastructure": "Low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "Low"
+      },
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YAM": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "medium",
+        "2.2.1 Environment": "low",
+        "2.2.2 Tenant Management": "low",
+        "2.2.3 Emergency Response": "low",
+        "2.3 Terminal Construction & Temporary Conditions": "low",
+        "3.0 Groundside & Airport Access": "low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "low",
+        "4.2 Baggage Induction at Check-in": "low",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "low",
+        "5.2 Bag Room Operations Environment": "low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "low",
+        "6.1 Boarding Lounge & Gate Area": "low",
+        "6.2 Gate & Boarding Bridge Operations": "low",
+        "6.3 Passenger Transport / Remote Stand Operations": "low",
+        "7.1 Stand Layout, Markings & Clearances": "Medium",
+        "7.2 Parking Guidance — Arrival & Departure": "low",
+        "7.3 Stand Services & GSE Staging": "low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "low",
+        "8.1 Potable Water Servicing Infrastructure": "Medium",
+        "8.2 Fueling Infrastructure": "Low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "Low"
+      },
+      "hazards": [
+        "No lead-in lines or apron markings",
+        "No defined potable water fill point area"
+      ]
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YBL": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "Low",
+        "2.2.1 Environment": "Low"
+      },
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YCD": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YDF": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YEG": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YFC": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YHM": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YHZ": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {
+        "2.0 Environment & Operating Context": "very high",
+        "3.1 Standards, Procedures & Training (WestJet)": "Medium",
+        "3.2 Operational Support & Setup (WestJet)": "Medium",
+        "3.3 Safety Management, Coordination & Oversight (WestJet)": "Low",
+        "4.1 Standards, Procedures & Training (Service Provider)": "High",
+        "4.2 Safety Management, Assurance & Risk Monitoring (Service Provider)": "Low",
+        "4.3 Roles, Accountability & Coordination (Service Provider)": "Medium",
+        "4.4 Staffing, Equipment & Capacity (Service Provider)": "Medium",
+        "5.1 Supervisory Presence & Oversight": "Low",
+        "5.2 Planning & Priority Management": "Low",
+        "5.3 Managing Known Issues": "Low",
+        "6.1 Communication & Team Coordination": "Medium",
+        "6.2 Workload & Time Pressure": "High",
+        "7.2 Task Performance": "Medium"
+      },
+      "hazards": []
+    }
+  },
+  "YKA": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YKF": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YLW": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YMM": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YOW": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YQB": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YQG": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YQL": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YQM": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YQQ": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YQR": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YQT": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.2.2 Tenant Management": "Low",
+        "2.2.3 Emergency Response": "Low",
+        "2.3 Terminal Construction & Temporary Conditions": "Low",
+        "3.0 Groundside & Airport Access": "Low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Low",
+        "4.2 Baggage Induction at Check-in": "Medium",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "Low",
+        "5.2 Bag Room Operations Environment": "Low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Low",
+        "6.1 Boarding Lounge & Gate Area": "Low",
+        "6.2 Gate & Boarding Bridge Operations": "Low",
+        "6.3 Passenger Transport / Remote Stand Operations": "Very high",
+        "7.1 Stand Layout, Markings & Clearances": "Very high",
+        "7.2 Parking Guidance — Arrival & Departure": "high",
+        "7.3 Stand Services & GSE Staging": "Low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "Medium",
+        "8.2 Fueling Infrastructure": "Low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "Low"
+      },
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YQU": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YQX": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "Low",
+        "2.2.1 Environment": "Low"
+      },
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YQY": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YSB": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YUL": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "medium",
+        "2.2.1 Environment": "low",
+        "2.2.2 Tenant Management": "medium",
+        "2.2.3 Emergency Response": "low",
+        "2.3 Terminal Construction & Temporary Conditions": "very high",
+        "3.0 Groundside & Airport Access": "low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "low",
+        "4.2 Baggage Induction at Check-in": "low",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "low",
+        "5.2 Bag Room Operations Environment": "medium",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "low",
+        "6.1 Boarding Lounge & Gate Area": "low",
+        "6.2 Gate & Boarding Bridge Operations": "low",
+        "6.3 Passenger Transport / Remote Stand Operations": "high",
+        "7.1 Stand Layout, Markings & Clearances": "low",
+        "7.2 Parking Guidance — Arrival & Departure": "low",
+        "7.3 Stand Services & GSE Staging": "low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "low",
+        "8.1 Potable Water Servicing Infrastructure": "low",
+        "8.2 Fueling Infrastructure": "low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "low",
+        "8.4 De-icing Infrastructure & Operation Setup": "low"
+      },
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YVR": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YWG": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YXE": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YXS": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YXT": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YXU": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YXX": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.2.2 Tenant Management": "Low",
+        "2.2.3 Emergency Response": "Low",
+        "2.3 Terminal Construction & Temporary Conditions": "Low",
+        "3.0 Groundside & Airport Access": "Low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Low",
+        "4.2 Baggage Induction at Check-in": "Low",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "Low",
+        "5.2 Bag Room Operations Environment": "Low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Low",
+        "6.1 Boarding Lounge & Gate Area": "Low",
+        "6.2 Gate & Boarding Bridge Operations": "Low",
+        "6.3 Passenger Transport / Remote Stand Operations": "Low",
+        "7.1 Stand Layout, Markings & Clearances": "Low",
+        "7.2 Parking Guidance — Arrival & Departure": "Low",
+        "7.3 Stand Services & GSE Staging": "Low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "Low",
+        "8.1 Potable Water Servicing Infrastructure": "Low",
+        "8.2 Fueling Infrastructure": "Low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "Low"
+      },
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YXY": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YYB": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "Medium",
+        "2.2.1 Environment": "Low",
+        "2.2.2 Tenant Management": "Low",
+        "2.2.3 Emergency Response": "Low",
+        "2.3 Terminal Construction & Temporary Conditions": "Low",
+        "3.0 Groundside & Airport Access": "Low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Low",
+        "4.2 Baggage Induction at Check-in": "Low",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "Low",
+        "5.2 Bag Room Operations Environment": "Low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Low",
+        "6.1 Boarding Lounge & Gate Area": "Low",
+        "6.2 Gate & Boarding Bridge Operations": "Low",
+        "6.3 Passenger Transport / Remote Stand Operations": "Low",
+        "7.1 Stand Layout, Markings & Clearances": "Low",
+        "7.2 Parking Guidance — Arrival & Departure": "Low",
+        "7.3 Stand Services & GSE Staging": "Low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "Low",
+        "8.1 Potable Water Servicing Infrastructure": "Low",
+        "8.2 Fueling Infrastructure": "Low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "Low"
+      },
+      "hazards": [
+        "lav waste",
+        "SMS Governance"
+      ]
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YYC": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YYG": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YYJ": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YYT": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YYZ": {
+    "asrm": "Yes",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "low",
+        "2.2.1 Environment": "low",
+        "2.2.2 Tenant Management": "low",
+        "2.2.3 Emergency Response": "low",
+        "2.3 Terminal Construction & Temporary Conditions": "low",
+        "3.0 Groundside & Airport Access": "low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "low",
+        "4.2 Baggage Induction at Check-in": "low",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "low",
+        "5.2 Bag Room Operations Environment": "low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "low",
+        "6.1 Boarding Lounge & Gate Area": "low",
+        "6.2 Gate & Boarding Bridge Operations": "low",
+        "6.3 Passenger Transport / Remote Stand Operations": "low",
+        "7.1 Stand Layout, Markings & Clearances": "low",
+        "7.2 Parking Guidance — Arrival & Departure": "low",
+        "7.3 Stand Services & GSE Staging": "low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "low",
+        "8.1 Potable Water Servicing Infrastructure": "low",
+        "8.2 Fueling Infrastructure": "low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "low",
+        "8.4 De-icing Infrastructure & Operation Setup": "low"
+      },
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {
+        "2.1 Safety Governance": "Low",
+        "2.2 Quality Assurance": "Low",
+        "2.3 Safety Risk Management": "Low",
+        "3.0 Organizational Strucutre & Staffing": "Low",
+        "4.1 Service Provider Training": "Low",
+        "4.2 Training Differenes & Awareness": "Low",
+        "5.1 Procedural Framework & Alignment": "Low",
+        "5.2 Potable Water Servicing": "Low",
+        "5.3  Load Control & Loading": "Low",
+        "5.4 Emergency Response Procedures": "Low",
+        "6.1 GSE Program": "Low",
+        "6.2 GSE Maintenance": "Low"
+      },
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "YZF": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "ZIH": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  },
+  "ZLO": {
+    "asrm": "",
+    "region": "",
+    "partA": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partB": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    },
+    "partC": {
+      "total": 0,
+      "axes": {},
+      "hazards": []
+    }
+  }
+}
