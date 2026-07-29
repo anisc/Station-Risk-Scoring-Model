@@ -411,6 +411,29 @@ function loadData() {
       } catch (e) { /* ignore bad data */ }
     }
   }
+
+  // Seed from RISK_PROFILE on first run
+  if (typeof RISK_PROFILE !== 'undefined') {
+    const stations = {};
+    Object.entries(RISK_PROFILE).forEach(([iata, entry]) => {
+      const s = emptyStation(iata);
+      s.region = entry.region || '';
+      // Copy Part C axes if any are scored
+      if (entry.partC?.axes && Object.keys(entry.partC.axes).length > 0) {
+        s.partC.status = 'complete';
+        s.partC.date = new Date().toISOString().slice(0, 10);
+        Object.entries(entry.partC.axes).forEach(([axisId, val]) => {
+          const match = AXES.partC.find(a => a.name === axisId || a.id === axisId);
+          if (match && val != null) s.partC.scores[match.id] = Number(val);
+        });
+      }
+      stations[iata] = s;
+    });
+    const data = { stations };
+    saveData(data);
+    return data;
+  }
+
   return { stations: {} };
 }
 
