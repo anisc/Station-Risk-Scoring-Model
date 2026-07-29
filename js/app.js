@@ -399,18 +399,10 @@ function loadData() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) {
     const data = JSON.parse(raw);
-    // If SEED_DATA is available and has a newer version, merge it in
+    // If SEED_DATA is available and has a newer version, re-seed fresh
     if (typeof SEED_DATA !== 'undefined' && typeof SEED_VERSION !== 'undefined' && SEED_VERSION !== data._seedVersion) {
-      Object.entries(SEED_DATA).forEach(([iata, entry]) => {
-        const s = emptyStation(iata);
-        Object.assign(s, entry);
-        if (typeof RISK_PROFILE !== 'undefined' && RISK_PROFILE[iata]?.region) {
-          s.region = RISK_PROFILE[iata].region;
-        }
-        data.stations[iata] = s;
-      });
-      data._seedVersion = SEED_VERSION;
-      saveData(data);
+      localStorage.removeItem(STORAGE_KEY);
+      return loadData();
     }
     return data;
   }
