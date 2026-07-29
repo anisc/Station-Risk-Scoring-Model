@@ -649,6 +649,14 @@ function stationMatchesRegion(iata, regionFilter) {
   return getStationRegion(iata) === regionFilter;
 }
 
+// Check if a station has any assessment data (Part A, B, or C scores)
+function stationHasAssessmentData(s) {
+  if (s.partA?.status === 'complete') return true;
+  if (getPartBList(s).some(b => b.status === 'complete')) return true;
+  if (s.partC?.status === 'complete') return true;
+  return false;
+}
+
 // Get unique sorted list of all regions
 function getAllRegions() {
   return [...new Set(Object.values(REGION_MAP))].sort();
@@ -2494,6 +2502,9 @@ function renderStationList() {
   let keys = Object.keys(data.stations).sort();
   const isSum = aggregationMode === 'sum';
 
+  // Hide stations with no assessment data
+  keys = keys.filter(iata => stationHasAssessmentData(data.stations[iata]));
+
   // Read filters
   const stationFilter = (document.getElementById('list-filter-station')?.value || '').trim();
   const spFilter = (document.getElementById('list-filter-sp')?.value || '').trim();
@@ -2764,8 +2775,11 @@ function sortTable(key) {
 function renderRankings() {
   const data = loadData();
   const container = document.getElementById('rankings-content');
-  const keys = Object.keys(data.stations);
+  let keys = Object.keys(data.stations);
   const isSum = aggregationMode === 'sum';
+
+  // Hide stations with no assessment data
+  keys = keys.filter(iata => stationHasAssessmentData(data.stations[iata]));
 
   if (keys.length === 0) {
     container.innerHTML = '<div class="empty-state" style="padding:3rem">No stations recorded yet. Use the Station Input tab to add one.</div>';
