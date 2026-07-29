@@ -8138,12 +8138,11 @@ function init() {
   loadAggMode();
   updateHeaderFormula();
 
-  // Set default date range to last 7 days
+  // Set default date range to year-to-date
   const dateFrom = document.getElementById('map-issues-date-from');
   const dateTo = document.getElementById('map-issues-date-to');
   if (dateFrom && !dateFrom.value) {
-    const d = new Date(); d.setDate(d.getDate() - 7);
-    dateFrom.value = d.toISOString().substring(0, 10);
+    dateFrom.value = `${new Date().getFullYear()}-01-01`;
   }
   if (dateTo && !dateTo.value) {
     dateTo.value = new Date().toISOString().substring(0, 10);
