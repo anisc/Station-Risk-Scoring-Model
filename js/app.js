@@ -9277,9 +9277,11 @@ function setupImportUI() {
     }
   });
   _lazyLoadScript('data/crs_merged_reports.js', () => {
+    _precomputeCrsSearchText();
+    initCrsMergedIssues();
+    if (document.getElementById('issues-view')?.classList.contains('active')) renderCrsMergedIssues();
     if (document.getElementById('map-view')?.classList.contains('active')) renderStationMap();
     if (document.getElementById('dist-view')?.classList.contains('active')) renderNetworkDistribution();
-    if (document.getElementById('issues-view')?.classList.contains('active')) renderCrsMergedIssues();
     renderDashboard();
     renderStationList();
     renderRankings();

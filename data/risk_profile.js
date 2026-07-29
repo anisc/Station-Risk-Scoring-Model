@@ -465,7 +465,11 @@ var RISK_PROFILE = {
         "6.2 Workload & Time Pressure": "Low",
         "7.2 Task Performance": "Low"
       },
-      "hazards": []
+      "hazards": [
+        "Flight paperwork",
+        "Pushback Operations",
+        "ADGS Sightlines"
+      ]
     }
   },
   "CUN": {
@@ -544,8 +548,27 @@ var RISK_PROFILE = {
     },
     "partC": {
       "total": 0,
-      "axes": {},
-      "hazards": []
+      "axes": {
+        "2.0 Environment & Operating Context": "Medium",
+        "3.1 Standards, Procedures & Training (WestJet)": "medium",
+        "3.2 Operational Support & Setup (WestJet)": "Low",
+        "3.3 Safety Management, Coordination & Oversight (WestJet)": "Low",
+        "4.1 Standards, Procedures & Training (Service Provider)": "medium",
+        "4.2 Safety Management, Assurance & Risk Monitoring (Service Provider)": "medium",
+        "4.3 Roles, Accountability & Coordination (Service Provider)": "Low",
+        "4.4 Staffing, Equipment & Capacity (Service Provider)": "Low",
+        "5.1 Supervisory Presence & Oversight": "Low",
+        "5.2 Planning & Priority Management": "Low",
+        "5.3 Managing Known Issues": "Low",
+        "6.1 Communication & Team Coordination": "Low",
+        "6.2 Workload & Time Pressure": "Low",
+        "7.2 Task Performance": "Low"
+      },
+      "hazards": [
+        "Differences Training",
+        "Pushback Operations",
+        "Anti-collision beacon"
+      ]
     }
   },
   "CZM": {
@@ -708,8 +731,28 @@ var RISK_PROFILE = {
     },
     "partC": {
       "total": 0,
-      "axes": {},
-      "hazards": []
+      "axes": {
+        "2.0 Environment & Operating Context": "Low",
+        "3.1 Standards, Procedures & Training (WestJet)": "Low",
+        "3.2 Operational Support & Setup (WestJet)": "Low",
+        "3.3 Safety Management, Coordination & Oversight (WestJet)": "medium",
+        "4.1 Standards, Procedures & Training (Service Provider)": "medium",
+        "4.2 Safety Management, Assurance & Risk Monitoring (Service Provider)": "Low",
+        "4.3 Roles, Accountability & Coordination (Service Provider)": "Low",
+        "4.4 Staffing, Equipment & Capacity (Service Provider)": "Low",
+        "5.1 Supervisory Presence & Oversight": "medium",
+        "5.2 Planning & Priority Management": "Low",
+        "5.3 Managing Known Issues": "Low",
+        "6.1 Communication & Team Coordination": "Low",
+        "6.2 Workload & Time Pressure": "Low",
+        "7.2 Task Performance": "Low"
+      },
+      "hazards": [
+        "Terminal Congestion",
+        "Refuelling Constraints",
+        "Supervision",
+        "Procedural Differences"
+      ]
     }
   },
   "FCO": {
@@ -1250,7 +1293,11 @@ var RISK_PROFILE = {
         "6.2 Workload & Time Pressure": "Low",
         "7.2 Task Performance": "Medium"
       },
-      "hazards": []
+      "hazards": [
+        "Staff turnover",
+        "SMS Reporting",
+        "Procedural Differences"
+      ]
     }
   },
   "LTO": {
@@ -1310,8 +1357,28 @@ var RISK_PROFILE = {
     },
     "partC": {
       "total": 0,
-      "axes": {},
-      "hazards": []
+      "axes": {
+        "2.0 Environment & Operating Context": "Medium",
+        "3.1 Standards, Procedures & Training (WestJet)": "Low",
+        "3.2 Operational Support & Setup (WestJet)": "Low",
+        "3.3 Safety Management, Coordination & Oversight (WestJet)": "Low",
+        "4.1 Standards, Procedures & Training (Service Provider)": "High",
+        "4.2 Safety Management, Assurance & Risk Monitoring (Service Provider)": "medium",
+        "4.3 Roles, Accountability & Coordination (Service Provider)": "medium",
+        "4.4 Staffing, Equipment & Capacity (Service Provider)": "medium",
+        "5.1 Supervisory Presence & Oversight": "Low",
+        "5.2 Planning & Priority Management": "Low",
+        "5.3 Managing Known Issues": "Low",
+        "6.1 Communication & Team Coordination": "Low",
+        "6.2 Workload & Time Pressure": "Low",
+        "7.2 Task Performance": "Low"
+      },
+      "hazards": [
+        "QCI",
+        "Sabre System",
+        "Remote Stand Operations",
+        "Staff Turnover"
+      ]
     }
   },
   "MBJ": {
@@ -1528,8 +1595,35 @@ var RISK_PROFILE = {
     "region": "",
     "partA": {
       "total": 0,
-      "axes": {},
-      "hazards": []
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "Low",
+        "2.2.1 Environment": "Low",
+        "2.2.2 Tenant Management": "Low",
+        "2.2.3 Emergency Response": "Low",
+        "2.3 Terminal Construction & Temporary Conditions": "Low",
+        "3.0 Groundside & Airport Access": "Low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Medium",
+        "4.2 Baggage Induction at Check-in": "Low",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "Low",
+        "5.2 Bag Room Operations Environment": "Low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Low",
+        "6.1 Boarding Lounge & Gate Area": "Medium",
+        "6.2 Gate & Boarding Bridge Operations": "Low",
+        "6.3 Passenger Transport / Remote Stand Operations": "Low",
+        "7.1 Stand Layout, Markings & Clearances": "Low",
+        "7.2 Parking Guidance — Arrival & Departure": "Low",
+        "7.3 Stand Services & GSE Staging": "Low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "Low",
+        "8.1 Potable Water Servicing Infrastructure": "Low",
+        "8.2 Fueling Infrastructure": "Low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "Low",
+        "8.4 De-icing Infrastructure & Operation Setup": "N/A"
+      },
+      "hazards": [
+        "Marshalling",
+        "Beacon",
+        "Terminal congestion"
+      ]
     },
     "partB": {
       "total": 0,
@@ -2090,7 +2184,26 @@ var RISK_PROFILE = {
       "total": 0,
       "axes": {
         "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "Low",
-        "2.2.1 Environment": "Low"
+        "2.2.1 Environment": "Low",
+        "2.2.2 Tenant Management": "Low",
+        "2.2.3 Emergency Response": "Low",
+        "2.3 Terminal Construction & Temporary Conditions": "Low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "Medium",
+        "4.2 Baggage Induction at Check-in": "High",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "High",
+        "5.2 Bag Room Operations Environment": "High",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "Low",
+        "6.1 Boarding Lounge & Gate Area": "Medium",
+        "6.2 Gate & Boarding Bridge Operations": "Low",
+        "6.3 Passenger Transport / Remote Stand Operations": "N/A",
+        "7.1 Stand Layout, Markings & Clearances": "High",
+        "7.2 Parking Guidance — Arrival & Departure": "Medium",
+        "7.3 Stand Services & GSE Staging": "High",
+        "7.4 Vehicle Service Roads & Apron Traffic": "High",
+        "8.1 Potable Water Servicing Infrastructure": "very high",
+        "8.2 Fueling Infrastructure": "low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "very high",
+        "8.4 De-icing Infrastructure & Operation Setup": "Low"
       },
       "hazards": []
     },
@@ -2101,8 +2214,27 @@ var RISK_PROFILE = {
     },
     "partC": {
       "total": 0,
-      "axes": {},
-      "hazards": []
+      "axes": {
+        "2.0 Environment & Operating Context": "Medium",
+        "3.1 Standards, Procedures & Training (WestJet)": "Low",
+        "3.2 Operational Support & Setup (WestJet)": "Low",
+        "3.3 Safety Management, Coordination & Oversight (WestJet)": "Low",
+        "4.1 Standards, Procedures & Training (Service Provider)": "Medium",
+        "4.2 Safety Management, Assurance & Risk Monitoring (Service Provider)": "Low",
+        "4.3 Roles, Accountability & Coordination (Service Provider)": "Low",
+        "4.4 Staffing, Equipment & Capacity (Service Provider)": "Low",
+        "5.1 Supervisory Presence & Oversight": "Medium",
+        "5.2 Planning & Priority Management": "Medium",
+        "5.3 Managing Known Issues": "Low",
+        "6.1 Communication & Team Coordination": "Low",
+        "6.2 Workload & Time Pressure": "Low",
+        "7.2 Task Performance": "Low"
+      },
+      "hazards": [
+        "Staffing",
+        "Training",
+        "Terminal Constraints"
+      ]
     }
   },
   "YCD": {
@@ -2205,7 +2337,30 @@ var RISK_PROFILE = {
     "region": "",
     "partA": {
       "total": 0,
-      "axes": {},
+      "axes": {
+        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "medium",
+        "2.2.1 Environment": "low",
+        "2.2.2 Tenant Management": "medium",
+        "2.2.3 Emergency Response": "low",
+        "2.3 Terminal Construction & Temporary Conditions": "very high",
+        "3.0 Groundside & Airport Access": "low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "low",
+        "4.2 Baggage Induction at Check-in": "low",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "low",
+        "5.2 Bag Room Operations Environment": "medium",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "low",
+        "6.1 Boarding Lounge & Gate Area": "low",
+        "6.2 Gate & Boarding Bridge Operations": "low",
+        "6.3 Passenger Transport / Remote Stand Operations": "high",
+        "7.1 Stand Layout, Markings & Clearances": "low",
+        "7.2 Parking Guidance — Arrival & Departure": "low",
+        "7.3 Stand Services & GSE Staging": "low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "low",
+        "8.1 Potable Water Servicing Infrastructure": "low",
+        "8.2 Fueling Infrastructure": "low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "low",
+        "8.4 De-icing Infrastructure & Operation Setup": "low"
+      },
       "hazards": []
     },
     "partB": {
@@ -2406,7 +2561,7 @@ var RISK_PROFILE = {
     }
   },
   "YQQ": {
-    "asrm": "Yes",
+    "asrm": "",
     "region": "",
     "partA": {
       "total": 0,
@@ -2420,8 +2575,25 @@ var RISK_PROFILE = {
     },
     "partC": {
       "total": 0,
-      "axes": {},
-      "hazards": []
+      "axes": {
+        "2.0 Environment & Operating Context": "High",
+        "3.1 Standards, Procedures & Training (WestJet)": "medium",
+        "3.2 Operational Support & Setup (WestJet)": "No conribution",
+        "3.3 Safety Management, Coordination & Oversight (WestJet)": "Medium",
+        "4.1 Standards, Procedures & Training (Service Provider)": "No contribution",
+        "4.2 Safety Management, Assurance & Risk Monitoring (Service Provider)": "Medium",
+        "4.3 Roles, Accountability & Coordination (Service Provider)": "Low",
+        "4.4 Staffing, Equipment & Capacity (Service Provider)": "Low",
+        "5.1 Supervisory Presence & Oversight": "No contribution",
+        "5.2 Planning & Priority Management": "No contribution",
+        "5.3 Managing Known Issues": "Medium",
+        "6.1 Communication & Team Coordination": "No contribution",
+        "6.2 Workload & Time Pressure": "No contribution",
+        "7.2 Task Performance": "No contribution"
+      },
+      "hazards": [
+        "Jet blast"
+      ]
     }
   },
   "YQR": {
@@ -2508,7 +2680,27 @@ var RISK_PROFILE = {
       "total": 0,
       "axes": {
         "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "Low",
-        "2.2.1 Environment": "Low"
+        "2.2.1 Environment": "Low",
+        "2.2.2 Tenant Management": "low",
+        "2.2.3 Emergency Response": "low",
+        "2.3 Terminal Construction & Temporary Conditions": "low",
+        "3.0 Groundside & Airport Access": "low",
+        "4.1 Check-in Layout, Capacity & Passenger Flow": "low",
+        "4.2 Baggage Induction at Check-in": "medium",
+        "5.1 Baggage System — Sortation & Screening Infrastructure": "low",
+        "5.2 Bag Room Operations Environment": "low",
+        "5.3 Arrivals, Transfer & Baggage Reclaim": "low",
+        "6.1 Boarding Lounge & Gate Area": "low",
+        "6.2 Gate & Boarding Bridge Operations": "low",
+        "6.3 Passenger Transport / Remote Stand Operations": "very high",
+        "7.1 Stand Layout, Markings & Clearances": "very high",
+        "7.2 Parking Guidance — Arrival & Departure": "High",
+        "7.3 Stand Services & GSE Staging": "low",
+        "7.4 Vehicle Service Roads & Apron Traffic": "medium",
+        "8.1 Potable Water Servicing Infrastructure": "low",
+        "8.2 Fueling Infrastructure": "low",
+        "8.3 Lavatory & Waste Servicing Infrastructure": "low",
+        "8.4 De-icing Infrastructure & Operation Setup": "low"
       },
       "hazards": []
     },
@@ -2566,30 +2758,7 @@ var RISK_PROFILE = {
     "region": "",
     "partA": {
       "total": 0,
-      "axes": {
-        "2.1 Airport Authority Safety Management System (SMS) & Safety\nGovernance": "medium",
-        "2.2.1 Environment": "low",
-        "2.2.2 Tenant Management": "medium",
-        "2.2.3 Emergency Response": "low",
-        "2.3 Terminal Construction & Temporary Conditions": "very high",
-        "3.0 Groundside & Airport Access": "low",
-        "4.1 Check-in Layout, Capacity & Passenger Flow": "low",
-        "4.2 Baggage Induction at Check-in": "low",
-        "5.1 Baggage System — Sortation & Screening Infrastructure": "low",
-        "5.2 Bag Room Operations Environment": "medium",
-        "5.3 Arrivals, Transfer & Baggage Reclaim": "low",
-        "6.1 Boarding Lounge & Gate Area": "low",
-        "6.2 Gate & Boarding Bridge Operations": "low",
-        "6.3 Passenger Transport / Remote Stand Operations": "high",
-        "7.1 Stand Layout, Markings & Clearances": "low",
-        "7.2 Parking Guidance — Arrival & Departure": "low",
-        "7.3 Stand Services & GSE Staging": "low",
-        "7.4 Vehicle Service Roads & Apron Traffic": "low",
-        "8.1 Potable Water Servicing Infrastructure": "low",
-        "8.2 Fueling Infrastructure": "low",
-        "8.3 Lavatory & Waste Servicing Infrastructure": "low",
-        "8.4 De-icing Infrastructure & Operation Setup": "low"
-      },
+      "axes": {},
       "hazards": []
     },
     "partB": {
