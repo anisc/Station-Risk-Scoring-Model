@@ -9268,6 +9268,31 @@ function setupImportUI() {
     progressPct.textContent = '0%';
     progressStep.textContent = '';
   });
+
+  // Lazy-load large data files after initial render
+  _lazyLoadScript('data/oapt_reports.js', () => {
+    if (document.getElementById('reporters-view')?.classList.contains('active')) renderReportersPage();
+    if (document.getElementById('detail-view')?.classList.contains('active')) {
+      const iata = document.getElementById('detail-view').dataset.iata;
+      if (iata) renderOccurrenceReports(iata);
+    }
+  });
+  _lazyLoadScript('data/crs_merged_reports.js', () => {
+    if (document.getElementById('map-view')?.classList.contains('active')) renderStationMap();
+    if (document.getElementById('dist-view')?.classList.contains('active')) renderNetworkDistribution();
+    if (document.getElementById('issues-view')?.classList.contains('active')) renderCrsMergedIssues();
+    renderDashboard();
+    renderStationList();
+    renderRankings();
+  });
+}
+
+function _lazyLoadScript(src, onload) {
+  const s = document.createElement('script');
+  s.src = src;
+  s.onload = onload;
+  s.async = true;
+  document.body.appendChild(s);
 }
 
 document.addEventListener('DOMContentLoaded', init);
