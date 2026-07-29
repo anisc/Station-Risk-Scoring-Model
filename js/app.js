@@ -397,7 +397,23 @@ let showNormalizedRisk = false;
 
 function loadData() {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw) return JSON.parse(raw);
+  if (raw) {
+    const data = JSON.parse(raw);
+    // If SEED_DATA is available and has a newer version, merge it in
+    if (typeof SEED_DATA !== 'undefined' && typeof SEED_VERSION !== 'undefined' && SEED_VERSION !== data._seedVersion) {
+      Object.entries(SEED_DATA).forEach(([iata, entry]) => {
+        const s = emptyStation(iata);
+        Object.assign(s, entry);
+        if (typeof RISK_PROFILE !== 'undefined' && RISK_PROFILE[iata]?.region) {
+          s.region = RISK_PROFILE[iata].region;
+        }
+        data.stations[iata] = s;
+      });
+      data._seedVersion = SEED_VERSION;
+      saveData(data);
+    }
+    return data;
+  }
 
   // Attempt one-time migration from old schemas (v1 / v2)
   const oldKeys = ['stationRiskData_v2', 'stationRiskData'];
@@ -424,7 +440,7 @@ function loadData() {
       }
       stations[iata] = s;
     });
-    const data = { stations };
+    const data = { stations, _seedVersion: SEED_VERSION };
     saveData(data);
     return data;
   }
