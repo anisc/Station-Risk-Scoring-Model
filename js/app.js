@@ -418,6 +418,10 @@ function loadData() {
     Object.entries(SEED_DATA).forEach(([iata, entry]) => {
       const s = emptyStation(iata);
       Object.assign(s, entry);
+      // Merge region from RISK_PROFILE (SEED_DATA has empty region)
+      if (typeof RISK_PROFILE !== 'undefined' && RISK_PROFILE[iata]?.region) {
+        s.region = RISK_PROFILE[iata].region;
+      }
       stations[iata] = s;
     });
     const data = { stations };
