@@ -412,7 +412,20 @@ function loadData() {
     }
   }
 
-  // Seed from RISK_PROFILE on first run
+  // Seed from SEED_DATA on first run (has assessment scores)
+  if (typeof SEED_DATA !== 'undefined') {
+    const stations = {};
+    Object.entries(SEED_DATA).forEach(([iata, entry]) => {
+      const s = emptyStation(iata);
+      Object.assign(s, entry);
+      stations[iata] = s;
+    });
+    const data = { stations };
+    saveData(data);
+    return data;
+  }
+
+  // Seed from RISK_PROFILE on first run (empty stations)
   if (typeof RISK_PROFILE !== 'undefined') {
     const stations = {};
     Object.entries(RISK_PROFILE).forEach(([iata, entry]) => {
