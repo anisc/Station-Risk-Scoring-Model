@@ -5555,7 +5555,7 @@ function renderMapIssuesMode(stations, regFilter) {
   // Filter records
   const filtered = CRS_MERGED_REPORTS.filter(r => {
     if (typeFilter && r.t !== typeFilter) return false;
-    if (descFilter && r.d !== descFilter) return false;
+    if (descFilter && !matchesDescriptorFamily(r.d, descFilter)) return false;
     if (hfacsFilter && r.h1 !== hfacsFilter) return false;
     if (airlineFilter && r.al !== airlineFilter) return false;
     if (aircraftFilter && r.ac !== aircraftFilter) return false;
@@ -5683,7 +5683,7 @@ function renderMapIssuesMode(stations, regFilter) {
       const matching = CRS_MERGED_REPORTS.filter(r => {
         if (r.c !== icao) return false;
         if (r.t !== type) return false;
-        if (descFilter && r.d !== descFilter) return false;
+        if (descFilter && !matchesDescriptorFamily(r.d, descFilter)) return false;
         if (hfacsFilter && r.h1 !== hfacsFilter) return false;
         if (dateFrom || dateTo) {
           const dt = (r.dt || '').substring(0, 10);
@@ -5817,6 +5817,7 @@ document.addEventListener('input', e => {
 // ─── Search presets (fill the search box with a ready-made query) ───────────
 const SEARCH_PRESETS = {
   'safety-vest': '"high visibility vest"|"hi viz"|"hi-vis"|"hiviz"|"safety vest"|"reflective vest"|"safety jacket"|"high-visibility vest"',
+  'crew-no-vest': '"without wearing a"|"without a vest"|"without the vest"|"not wearing a high"|"not wearing a reflective"|"not wearing a safety"|"not wearing their yellow"|"not wearing the yellow"|"not wearing yellow"|"forgot to wear"|"with no vest"|"without a reflective"|"without hi-vis"|"without hi viz"|"without a high"|"no vest or name tag"|"did not have hi-vis"|"did not have high"|"doesn\'t have hi vis"|"no hi-vis"|"until vests" -life -seal -compartment -demo -kennel -svan -pet -dog -scarf',
 };
 document.addEventListener('change', e => {
   if (e.target.id === 'map-search-preset') {
@@ -5893,7 +5894,7 @@ function parseSearchQuery(query) {
 }
 
 function searchPhraseRe(phrase) {
-  return new RegExp('\\b' + phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
+  return new RegExp('\\b' + phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + 's?\\b');
 }
 
 function recordSearchText(r) {
@@ -9169,6 +9170,22 @@ let _issuesL1Filter = null;
 let _issuesL2Filter = null;
 let _issuesFilteredRecords = [];
 
+// Descriptor families: selecting one member also matches the other related safety descriptors
+const SAFETY_DESCRIPTOR_FAMILY = new Set([
+  'Safety Descriptors',
+  'Safety Self-Report',
+  'Hazard Report',
+  'SINF Threats',
+  'Inflight Safety Incident or Hazard',
+]);
+
+function matchesDescriptorFamily(recordDesc, selectedDesc) {
+  if (!selectedDesc) return true;
+  if (recordDesc === selectedDesc) return true;
+  if (SAFETY_DESCRIPTOR_FAMILY.has(selectedDesc) && SAFETY_DESCRIPTOR_FAMILY.has(recordDesc)) return true;
+  return false;
+}
+
 let _dashTypeDescMap = {};
 
 function initCrsMergedIssues() {
@@ -9266,7 +9283,7 @@ function renderCrsMergedIssues() {
   // Filter records
   const filtered = CRS_MERGED_REPORTS.filter(r => {
     if (typeFilter && r.t !== typeFilter) return false;
-    if (descFilter && r.d !== descFilter) return false;
+    if (descFilter && !matchesDescriptorFamily(r.d, descFilter)) return false;
     if (hfacsFilter && r.h1 !== hfacsFilter) return false;
     if (stationFilterSet && !stationFilterSet.has(r.c)) return false;
     if (regionFilter && r.r !== regionFilter) return false;
