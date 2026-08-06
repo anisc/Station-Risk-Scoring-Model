@@ -186,8 +186,8 @@ def process_oapt():
             'c': str(row.get('ImportDate', '')),
             'i': str(row.get('ImportedBy', '')),
             'o': str(row.get('OccNo', '')),
-            'd': str(row.get('ReportDesc', '') or row.get('OccDesc', ''))[:200],
-            'od': str(row.get('OccDesc', '') or '')[:500],
+            'd': str(row.get('ReportDesc', '') or row.get('OccDesc', ''))[:800],
+            'od': str(row.get('OccDesc', '') or '')[:1200],
             'n': [],
             't': str(row.get('OAPT_Concerns', '') or row.get('OccType', '')),
             'l': str(row.get('DateClosed', '')),
@@ -314,9 +314,9 @@ def process_crs(oapt_data=None):
                 od = str(r.get('od', '') or '')
                 if len(od) > len(oapt_occ_desc):
                     oapt_occ_desc = od
-        rd = oapt_desc_val if oapt_desc_val else crs_desc
+        rd = oapt_occ_desc if oapt_occ_desc and len(oapt_occ_desc) >= len(oapt_desc_val) else (oapt_desc_val if oapt_desc_val else crs_desc)
         # Build full searchable text — prioritize OccDesc (richest for search)
-        search_text = ' '.join(filter(None, [oapt_occ_desc, rd, crs_desc]))[:800]
+        search_text = ' '.join(filter(None, [oapt_occ_desc, oapt_desc_val, crs_desc]))[:1000]
 
         # Get concerns and report count from OAPT (match by base OccNo)
         concerns = []
@@ -360,7 +360,7 @@ def process_crs(oapt_data=None):
             'dt': str(g('Occ Date')),
             'dep': dep,
             'arr': arr,
-            'rd': rd[:500] if rd else '',
+            'rd': rd[:1000] if rd else '',
             'st': search_text,
             'al': g('Airline'),
             'ac': g('AC Model'),

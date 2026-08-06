@@ -169,6 +169,16 @@ function escHtml(str) {
   return d.innerHTML;
 }
 
+// Escape a string for safe use inside a double-quoted HTML attribute
+function escAttr(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/'/g, '&#39;');
+}
+
 // ─── Excel import data ────────────────────────────────────────────────────────
 // Label → numeric score mapping (matches SCORE_WEIGHTS keys)
 const EXCEL_LABEL_MAP = {
@@ -5999,7 +6009,7 @@ function renderSearchMatchHtml(iata, keyword, maxShow) {
     const typeColor = typeColors[r.t] || '#6B7280';
     const snippet = (r.rd || '').substring(0, 120);
     const highlighted = hlRe ? snippet.replace(hlRe, m => `<mark style="background:#FDE68A;padding:0 1px;border-radius:2px">${m}</mark>`) : snippet;
-    html += `<div style="margin-bottom:4px;padding:3px 0;border-bottom:1px solid #E5E7EB">`;
+    html += `<div class="search-match-row" data-tooltip="${escAttr(buildOccTooltipHtml(r))}" style="margin-bottom:4px;padding:3px 0;border-bottom:1px solid #E5E7EB">`;
     html += `<span style="font-weight:600;color:#111827">${r.o || '?'}</span> `;
     html += `<span style="display:inline-block;padding:0 4px;border-radius:3px;background:${typeColor};color:#fff;font-size:0.65rem;font-weight:600">${r.t}</span>`;
     html += ` <span style="color:#6b7280;font-size:0.7rem">${r.dt || ''}</span>`;
@@ -6010,6 +6020,90 @@ function renderSearchMatchHtml(iata, keyword, maxShow) {
   html += `</div></div>`;
   return html;
 }
+
+// ─── Occurrence hover tooltip (full description) ────────────────────────────
+function buildOccTooltipHtml(r) {
+  const typeColors = { OAPT: '#059669', SAPT: '#D97706', 'E-OAPT': '#2563EB', 'E-SAPT': '#7C3AED', CABS: '#6B7280' };
+  const desc = (r.rd || r.od || r.d || '').trim();
+  const typeBadges = r.t
+    ? `<span style="display:inline-block;padding:1px 5px;border-radius:3px;background:${typeColors[r.t] || '#6B7280'};color:#fff;font-size:0.65rem;font-weight:600">${escHtml(r.t)}</span>`
+    : (r.types && Object.keys(r.types).length
+      ? Object.entries(r.types).sort((a, b) => b[1] - a[1]).map(([t, c]) =>
+        `<span style="display:inline-block;padding:1px 5px;border-radius:3px;background:${typeColors[t] || '#6B7280'};color:#fff;font-size:0.65rem;font-weight:600;margin-right:3px">${escHtml(t)}${c > 1 ? ` ×${c}` : ''}</span>`).join('')
+      : '');
+  const metaParts = [r.dt, r.c, r.al, r.ac, r.f].filter(Boolean);
+  if ((r.rc || 0) > 1) metaParts.push(`${r.rc} reports`);
+  const meta = metaParts.join(' · ');
+  const concerns = (r.n || []).length
+    ? `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px">${(r.n || []).map(t => `<span style="display:inline-block;padding:1px 5px;border-radius:3px;background:#374151;color:#D1D5DB;font-size:0.65rem">${escHtml(t)}</span>`).join('')}</div>`
+    : '';
+  return `<div style="font-weight:600;margin-bottom:4px">${escHtml(r.o || 'Occurrence')}${typeBadges ? ` ${typeBadges}` : ''}${meta ? `<span style="color:#9CA3AF;font-weight:400;font-size:0.68rem"> ${escHtml(meta)}</span>` : ''}</div>` +
+    `<div style="white-space:pre-wrap;word-wrap:break-word">${desc ? escHtml(desc) : '<span style="color:#9CA3AF;font-style:italic">No description available.</span>'}</div>` +
+    concerns;
+}
+
+let _occTooltipEl = null;
+let _occTooltipRow = null;
+function getOccTooltipEl() {
+  if (!_occTooltipEl) {
+    _occTooltipEl = document.createElement('div');
+    _occTooltipEl.className = 'occ-tooltip';
+    _occTooltipEl.style.display = 'none';
+    _occTooltipEl.addEventListener('mouseleave', hideOccTooltip);
+    document.body.appendChild(_occTooltipEl);
+  }
+  return _occTooltipEl;
+}
+function showOccTooltip(row, x, y) {
+  const tip = getOccTooltipEl();
+  tip.innerHTML = row.getAttribute('data-tooltip') || '';
+  tip.style.display = 'block';
+  positionOccTooltip(x, y);
+}
+function positionOccTooltip(x, y) {
+  const tip = getOccTooltipEl();
+  if (tip.style.display === 'none') return;
+  tip.style.left = '0px';
+  tip.style.top = '0px';
+  const w = tip.offsetWidth;
+  const h = tip.offsetHeight;
+  let left = x + 14;
+  let top = y + 14;
+  if (left + w > window.innerWidth - 8) left = Math.max(8, x - w - 14);
+  if (top + h > window.innerHeight - 8) top = Math.max(8, y - h - 14);
+  tip.style.left = left + 'px';
+  tip.style.top = top + 'px';
+}
+function hideOccTooltip() {
+  _occTooltipRow = null;
+  if (_occTooltipEl) _occTooltipEl.style.display = 'none';
+}
+document.addEventListener('mouseover', e => {
+  const row = e.target.closest ? e.target.closest('.search-match-row') : null;
+  if (row) {
+    _occTooltipRow = row;
+    showOccTooltip(row, e.clientX, e.clientY);
+  }
+});
+document.addEventListener('mousemove', e => {
+  if (_occTooltipRow) positionOccTooltip(e.clientX, e.clientY);
+});
+document.addEventListener('mouseout', e => {
+  const row = e.target.closest ? e.target.closest('.search-match-row') : null;
+  if (row && _occTooltipRow === row) {
+    const rel = e.relatedTarget;
+    if (rel && rel.closest && (rel.closest('.search-match-row') || rel.closest('.occ-tooltip'))) return;
+    hideOccTooltip();
+  }
+});
+document.addEventListener('click', e => {
+  if (e.target.closest && !e.target.closest('.search-match-row') && !e.target.closest('.occ-tooltip')) {
+    hideOccTooltip();
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') hideOccTooltip();
+});
 
 function _searchPopupHtml(iata, name, dimmed) {
   return `<strong>${name || iata} (${iata})</strong><br>` +
@@ -6740,7 +6834,7 @@ function renderAdvisorAnalysis(name, region) {
                 <span class="adv-rpt-type-cell"><span class="dash-issues-occ-type" style="background:${_issuesOccTypeColors[r.t] || '#94A3B8'}22;color:${_issuesOccTypeColors[r.t] || '#94A3B8'}">${escHtml(r.t || '—')}</span></span>
                 <span class="adv-rpt-station-cell">${escHtml(r.iata || '—')}</span>
                 <span class="adv-rpt-status-cell ${isOpen ? 'adv-rpt-open' : 'adv-rpt-closed'}">${isOpen ? 'Open' : 'Closed' + closedBy}</span>
-                <span class="adv-rpt-desc-cell">${escHtml((r.rd || '').substring(0, 100))}${(r.rd || '').length > 100 ? '\u2026' : ''}</span>
+                <span class="adv-rpt-desc-cell search-match-row" data-tooltip="${escAttr(buildOccTooltipHtml(r))}">${escHtml((r.rd || r.od || r.d || '').substring(0, 100))}${(r.rd || r.od || r.d || '').length > 100 ? '\u2026' : ''}</span>
               </div>`;
           }).join('')
           : '<div class="empty-state">No reports available.</div>';
@@ -9601,7 +9695,7 @@ function showOccNoPopup(title, occs) {
       <span class="occno-popup-rc">${r.rc || 1} report${(r.rc || 1) !== 1 ? 's' : ''}</span>
       ${types.join('')}
       <span class="occno-popup-city">${escHtml(r.c || '')}</span>
-      <span class="occno-popup-desc">${escHtml((r.rd || r.st || '').substring(0, 100))}${(r.rd || r.st || '').length > 100 ? '\u2026' : ''}</span>
+      <span class="occno-popup-desc search-match-row" data-tooltip="${escAttr(buildOccTooltipHtml(r))}">${escHtml((r.rd || r.od || r.d || '').substring(0, 100))}${(r.rd || r.od || r.d || '').length > 100 ? '\u2026' : ''}</span>
     </div>`;
   }).join('');
 
@@ -9692,7 +9786,7 @@ function renderIssuesOccurrences(records) {
       <span class="dash-issues-occ-reports">${g.rc || g.count}</span>
       <span class="dash-issues-occ-type-cell">${typeBadge}</span>
       <span class="dash-issues-occ-city">${escHtml(g.c || '—')}</span>
-      <span class="dash-issues-occ-desc">${escHtml((g.rd || '').substring(0, 120))}${(g.rd || '').length > 120 ? '\u2026' : ''}</span>
+      <span class="dash-issues-occ-desc search-match-row" data-tooltip="${escAttr(buildOccTooltipHtml(g))}">${escHtml((g.rd || '').substring(0, 120))}${(g.rd || '').length > 120 ? '\u2026' : ''}</span>
     </div>`;
   }).join('');
 
