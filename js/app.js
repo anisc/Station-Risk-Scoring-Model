@@ -158,6 +158,7 @@ const STORAGE_KEY = 'stationRiskData_v3';
 const AGG_MODE_KEY = 'stationRiskAggMode';
 const EXCEL_SEEDED_KEY = 'excelDataSeeded_v1';
 const RPI_SETTINGS_KEY = 'stationRiskRpiSettings';
+const CONTRACTOR_IMPORTER = 't1-crsapi_p';
 const ALL_AXES = [...AXES.partA, ...AXES.partB, ...AXES.partC];
 
 let isitTaxonomy = [];
@@ -389,9 +390,13 @@ let trendChart = null;
 let detailScoreChart = null;
 let detailOpChart = null;
 let detailConcernChart = null;
+let detailForecastChart = null;
+let networkForecastChart = null;
 let currentStation = null;
 let _partBSelectedIdx = 0;
 let showNormalizedRisk = false;
+let RISK_FORECAST_DATA = null;
+let _netForecastBuilt = false;
 
 // ─── Storage & data helpers ───────────────────────────────────────────────────
 
@@ -3596,6 +3601,8 @@ function renderStationMap() {
     if (_mapDistChart) { _mapDistChart.destroy(); _mapDistChart = null; }
   }
 
+  appendMapSearchStats();
+
   // Geographic polygon overlay + region name label
   if (regFilter) {
     renderMapRegionOverlay(regFilter);
@@ -3694,26 +3701,26 @@ function renderMapDistributionChart(values, label, unit, fixedBinWidth) {
 
   statsEl.textContent = `μ = ${mean.toFixed(2)} ${unit}  ·  M = ${median.toFixed(2)}  ·  σ = ${std.toFixed(2)}  ·  n = ${values.length}`;
 
-  let bins, labels, binWidth;
+  let bins, labels, binWidth, minVal, binCount;
   if (fixedBinWidth) {
     const dataMin = Math.max(0, Math.min(...values));
     const sortedVals = [...values].sort((a, b) => a - b);
     const p95Idx = Math.min(Math.floor(sortedVals.length * 0.95), sortedVals.length - 1);
     const capMax = Math.max(fixedBinWidth * 2, sortedVals[p95Idx]);
-    const binStart = Math.floor(dataMin / fixedBinWidth) * fixedBinWidth;
+    minVal = Math.floor(dataMin / fixedBinWidth) * fixedBinWidth;
     const binEnd = Math.ceil(capMax / fixedBinWidth) * fixedBinWidth;
-    const binCount = Math.max(1, Math.round((binEnd - binStart) / fixedBinWidth));
+    binCount = Math.max(1, Math.round((binEnd - minVal) / fixedBinWidth));
     binWidth = fixedBinWidth;
     bins = new Array(binCount).fill(0);
     values.forEach(v => {
       if (v > capMax) return;
-      const idx = Math.min(Math.floor((v - binStart) / binWidth), binCount - 1);
+      const idx = Math.min(Math.floor((v - minVal) / binWidth), binCount - 1);
       if (idx >= 0 && idx < binCount) bins[idx]++;
     });
-    labels = bins.map((_, i) => `${(binStart + i * binWidth).toFixed(0)}–${(binStart + (i + 1) * binWidth).toFixed(0)}`);
+    labels = bins.map((_, i) => `${(minVal + i * binWidth).toFixed(0)}–${(minVal + (i + 1) * binWidth).toFixed(0)}`);
   } else {
-    const binCount = Math.min(30, Math.max(10, Math.ceil(Math.sqrt(values.length))));
-    const minVal = Math.max(0, p5);
+    binCount = Math.min(30, Math.max(10, Math.ceil(Math.sqrt(values.length))));
+    minVal = Math.max(0, p5);
     const maxVal = p95 || 1;
     binWidth = (maxVal - minVal) / binCount || 1;
     bins = new Array(binCount).fill(0);
@@ -4257,6 +4264,7 @@ function renderMapRiskMode(stations, regFilter) {
       <div style="font-size:0.85rem;line-height:1.5">
         ${mapSearchKeyword ? _searchPopupHtml(s.iataCode, s.name, dimmed) : `
         <strong>${s.name || s.iataCode} (${s.iataCode})</strong><br>
+        ${coveragePopupHtml(s.iataCode)}
         Region: ${getStationRegion(s.iataCode) || '—'}${dimmed ? ' <span style="color:#94A3B8">(dimmed)</span>' : ''}<br>
         ${(() => {
           if (!cs || !cs.reportingFlag) return '';
@@ -4432,6 +4440,7 @@ function renderMapRiskOaptMode(stations, regFilter) {
       <div style="font-size:0.85rem;line-height:1.5">
         ${mapSearchKeyword ? _searchPopupHtml(s.iataCode, s.name, dimmed) : `
         <strong>${s.name || s.iataCode} (${s.iataCode})</strong><br>
+        ${coveragePopupHtml(s.iataCode)}
         Region: ${getStationRegion(s.iataCode) || '—'}${dimmed ? ' <span style="color:#94A3B8">(dimmed)</span>' : ''}<br>
         ${flagHtml}
         ${(() => {
@@ -4611,6 +4620,7 @@ function renderMapRiskHazardMode(stations, regFilter) {
       <div style="font-size:0.85rem;line-height:1.5">
         ${mapSearchKeyword ? _searchPopupHtml(s.iataCode, s.name, dimmed) : `
         <strong>${s.name || s.iataCode} (${s.iataCode})</strong><br>
+        ${coveragePopupHtml(s.iataCode)}
         Region: ${getStationRegion(s.iataCode) || '—'}${dimmed ? ' <span style="color:#94A3B8">(dimmed)</span>' : ''}<br>
         ${flagHtml}
         ${(() => {
@@ -4787,6 +4797,7 @@ function renderMapRiskFlightMode(stations, regFilter) {
       <div style="font-size:0.85rem;line-height:1.5">
         ${mapSearchKeyword ? _searchPopupHtml(s.iataCode, s.name, dimmed) : `
         <strong>${s.name || s.iataCode} (${s.iataCode})</strong><br>
+        ${coveragePopupHtml(s.iataCode)}
         Region: ${getStationRegion(s.iataCode) || '—'}${dimmed ? ' <span style="color:#94A3B8">(dimmed)</span>' : ''}<br>
         ${flagHtml}
         ${(() => {
@@ -4954,6 +4965,7 @@ function renderMapRiskLogMode(stations, regFilter) {
       <div style="font-size:0.85rem;line-height:1.5">
         ${mapSearchKeyword ? _searchPopupHtml(s.iataCode, s.name, dimmed) : `
         <strong>${s.name || s.iataCode} (${s.iataCode})</strong><br>
+        ${coveragePopupHtml(s.iataCode)}
         Region: ${getStationRegion(s.iataCode) || '—'}${dimmed ? ' <span style="color:#94A3B8">(dimmed)</span>' : ''}<br>
         ${flagHtml}
         ${(() => {
@@ -5120,6 +5132,7 @@ function renderMapLogRiskHazardMode(stations, regFilter) {
       <div style="font-size:0.85rem;line-height:1.5">
         ${mapSearchKeyword ? _searchPopupHtml(s.iataCode, s.name, dimmed) : `
         <strong>${s.name || s.iataCode} (${s.iataCode})</strong><br>
+        ${coveragePopupHtml(s.iataCode)}
         Region: ${getStationRegion(s.iataCode) || '—'}${dimmed ? ' <span style="color:#94A3B8">(dimmed)</span>' : ''}<br>
         ${flagHtml}
         ${(() => {
@@ -5287,6 +5300,7 @@ function renderMapLogRiskFlightMode(stations, regFilter) {
       <div style="font-size:0.85rem;line-height:1.5">
         ${mapSearchKeyword ? _searchPopupHtml(s.iataCode, s.name, dimmed) : `
         <strong>${s.name || s.iataCode} (${s.iataCode})</strong><br>
+        ${coveragePopupHtml(s.iataCode)}
         Region: ${getStationRegion(s.iataCode) || '—'}${dimmed ? ' <span style="color:#94A3B8">(dimmed)</span>' : ''}<br>
         ${flagHtml}
         ${(() => {
@@ -5433,6 +5447,7 @@ function renderMapFlightCountMode(stations, regFilter) {
       <div style="font-size:0.85rem;line-height:1.5">
         ${mapSearchKeyword ? _searchPopupHtml(s.iataCode, s.name, dimmed) : `
         <strong>${s.name || s.iataCode} (${s.iataCode})</strong><br>
+        ${coveragePopupHtml(s.iataCode)}
         Region: ${getStationRegion(s.iataCode) || '—'}${dimmed ? ' <span style="color:#94A3B8">(dimmed)</span>' : ''}<br>
         Flight Count: <strong>${fc.toLocaleString()}</strong><br>
         ${cs ? `Risk Score: <strong>${cs.finalScore.toFixed(2)}</strong> — ${cs.tier?.tier || '—'} tier<br>
@@ -5621,6 +5636,7 @@ function renderMapIssuesMode(stations, regFilter) {
       <div style="font-size:0.85rem;line-height:1.6;min-width:180px">
         ${mapSearchKeyword ? _searchPopupHtml(iata, iata, dimmed) : `
         <strong>${iata || icao}</strong> ${dimmed ? '<span style="color:#94A3B8">(outside region)</span>' : ''}<br>
+        ${coveragePopupHtml(iata)}
         Region: ${region || '—'}<br>
         Total Flights${(dateFrom || dateTo) ? ` (${dateFrom || '…'} to ${dateTo || '…'})` : ''}: <strong>${flightTotal !== null ? flightTotal.toLocaleString() : '—'}</strong><br>
         Total Occurrences: <strong style="color:${color};font-size:1.1rem">${count}</strong><br>
@@ -5788,48 +5804,174 @@ document.addEventListener('input', e => {
   }
 });
 
+// ─── Search presets (fill the search box with a ready-made query) ───────────
+const SEARCH_PRESETS = {
+  'safety-vest': '"high visibility vest"|"hi viz"|"hi-vis"|"hiviz"|"safety vest"|"reflective vest"|"safety jacket"|"high-visibility vest"',
+};
+document.addEventListener('change', e => {
+  if (e.target.id === 'map-search-preset') {
+    const input = document.getElementById('map-keyword-search');
+    if (input) input.value = SEARCH_PRESETS[e.target.value] || '';
+    renderStationMap();
+  }
+  if (e.target.id === 'dash-issues-search-preset') {
+    const input = document.getElementById('dash-issues-search');
+    if (input) input.value = SEARCH_PRESETS[e.target.value] || '';
+    renderCrsMergedIssues();
+  }
+});
+
+// ─── Multi-term search query support ────────────────────────────────────────
+// Query syntax (applies to map search and Issues dashboard search):
+//   "phrase with spaces"  → exact phrase (word-boundary, case-insensitive)
+//   term1|term2|term3     → any of the terms (OR within one group)
+//   -term                 → exclude records containing term
+//   plain words           → all terms must be present (AND across groups)
+// Example (safety vest, excluding life vest):
+//   -life -lifejacket -pfd "high visibility vest"|"hi viz"|"safety vest"|"reflective vest"
+function tokenizeSearchQuery(query) {
+  const tokens = [];
+  let buf = '';
+  for (let i = 0; i < query.length; i++) {
+    const ch = query[i];
+    if (ch === '"') {
+      buf += ch;
+      i++;
+      while (i < query.length && query[i] !== '"') { buf += query[i]; i++; }
+      if (i < query.length) { buf += query[i]; }
+    } else if (/\s/.test(ch)) {
+      if (buf) { tokens.push(buf); buf = ''; }
+    } else {
+      buf += ch;
+    }
+  }
+  if (buf) tokens.push(buf);
+  return tokens;
+}
+
+function splitSearchAlternatives(s, sep) {
+  const parts = [];
+  let start = 0, inQ = false;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === '"') inQ = !inQ;
+    else if (ch === sep && !inQ) { parts.push(s.slice(start, i)); start = i + 1; }
+  }
+  parts.push(s.slice(start));
+  return parts;
+}
+
+function parseSearchQuery(query) {
+  if (!query) return null;
+  const include = [];
+  const exclude = [];
+  for (const raw of tokenizeSearchQuery(query)) {
+    let negated = false;
+    let t = raw.trim();
+    if (t.startsWith('-')) { negated = true; t = t.slice(1).trim(); }
+    const alts = [];
+    for (let part of splitSearchAlternatives(t, '|')) {
+      part = part.trim();
+      if (part.length >= 2 && part[0] === '"' && part[part.length - 1] === '"') part = part.slice(1, -1);
+      if (part) alts.push(part.toLowerCase());
+    }
+    if (!alts.length) continue;
+    (negated ? exclude : include).push(alts);
+  }
+  if (!include.length && !exclude.length) return null;
+  return { include, exclude };
+}
+
+function searchPhraseRe(phrase) {
+  return new RegExp('\\b' + phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
+}
+
+function recordSearchText(r) {
+  return [r._nLow, r._rdLow, r._stLow, r._oLow].filter(Boolean).join(' ');
+}
+
+function recordMatchesQuery(r, query) {
+  const q = parseSearchQuery(query);
+  if (!q) return false;
+  const hay = recordSearchText(r);
+  for (const alts of q.exclude) {
+    for (const ph of alts) {
+      if (searchPhraseRe(ph).test(hay)) return false;
+    }
+  }
+  for (const alts of q.include) {
+    let ok = false;
+    for (const ph of alts) {
+      if (searchPhraseRe(ph).test(hay)) { ok = true; break; }
+    }
+    if (!ok) return false;
+  }
+  return true;
+}
+
+function getSearchHighlightRe(query) {
+  const q = parseSearchQuery(query);
+  if (!q) return null;
+  const phrases = [];
+  for (const alts of q.include) phrases.push(...alts);
+  if (!phrases.length) return null;
+  const parts = phrases.map(p => '(?:' + p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')');
+  return new RegExp('\\b(?:' + parts.join('|') + ')\\b', 'gi');
+}
+
 // Build set of station IATA codes matching a keyword search in CRS+OAPT data
 function getMapSearchMatches(keyword) {
   if (!keyword || typeof CRS_MERGED_REPORTS === 'undefined') return null;
-  const kw = keyword.toLowerCase();
-  const kwRe = new RegExp('\\b' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
   const matched = new Set();
   CRS_MERGED_REPORTS.forEach(r => {
-    const inConcerns = r._nLow && kwRe.test(r._nLow);
-    const inDesc = r._rdLow && kwRe.test(r._rdLow);
-    const inSearch = r._stLow && kwRe.test(r._stLow);
-    const inOccNo = r._oLow && kwRe.test(r._oLow);
-    if (inConcerns || inDesc || inSearch || inOccNo) {
-      const city = (r.c || '').toUpperCase();
-      let iata = ICAO_TO_IATA_GLOBAL[city] || null;
-      if (!iata && city.length === 3) iata = city;
-      if (iata) matched.add(iata);
-    }
+    if (!recordMatchesQuery(r, keyword)) return;
+    const city = (r.c || '').toUpperCase();
+    let iata = ICAO_TO_IATA_GLOBAL[city] || null;
+    if (!iata && city.length === 3) iata = city;
+    if (iata) matched.add(iata);
   });
   return matched;
 }
 
 function getCrsMatchesForStation(iata, keyword) {
   if (!keyword || !iata || typeof CRS_MERGED_REPORTS === 'undefined') return [];
-  const kw = keyword.toLowerCase();
-  const kwRe = new RegExp('\\b' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
   const matchingIcaos = new Set([iata]);
   Object.entries(ICAO_TO_IATA_GLOBAL).forEach(([icao, iata2]) => { if (iata2 === iata) matchingIcaos.add(icao); });
-  return CRS_MERGED_REPORTS.filter(r => {
-    if (!matchingIcaos.has(r.c)) return false;
-    const inConcerns = r._nLow && kwRe.test(r._nLow);
-    const inDesc = r._rdLow && kwRe.test(r._rdLow);
-    const inSearch = r._stLow && kwRe.test(r._stLow);
-    const inOccNo = r._oLow && kwRe.test(r._oLow);
-    return inConcerns || inDesc || inSearch || inOccNo;
+  return CRS_MERGED_REPORTS.filter(r => matchingIcaos.has(r.c) && recordMatchesQuery(r, keyword));
+}
+
+// Count unique matching occurrences and distinct airports for a search query
+function countSearchMatches(keyword) {
+  if (!keyword || typeof CRS_MERGED_REPORTS === 'undefined') return null;
+  const occs = new Set();
+  const stations = new Set();
+  CRS_MERGED_REPORTS.forEach(r => {
+    if (!recordMatchesQuery(r, keyword)) return;
+    if (r.o) occs.add(r.o);
+    const city = (r.c || '').toUpperCase();
+    let iata = ICAO_TO_IATA_GLOBAL[city] || null;
+    if (!iata && city.length === 3) iata = city;
+    if (iata) stations.add(iata);
   });
+  return { count: occs.size, stations: stations.size };
+}
+
+// Append "Search: N occurrences matching ..." to the map stats bar when a search is active
+function appendMapSearchStats() {
+  const statsEl = document.getElementById('map-stats');
+  if (!statsEl || !mapSearchKeyword) return;
+  const res = countSearchMatches(mapSearchKeyword);
+  if (!res) return;
+  const kw = mapSearchKeyword.length > 60 ? mapSearchKeyword.slice(0, 57) + '…' : mapSearchKeyword;
+  const extra = `<span class="map-stats-search">Search: <strong>${res.count.toLocaleString()} occurrence${res.count === 1 ? '' : 's'}</strong> matching &ldquo;${escHtml(kw)}&rdquo; across ${res.stations} airport${res.stations === 1 ? '' : 's'}</span>`;
+  statsEl.innerHTML = statsEl.innerHTML ? statsEl.innerHTML + ' &middot; ' + extra : extra;
 }
 
 function renderSearchMatchHtml(iata, keyword, maxShow) {
   maxShow = maxShow || 8;
   const matches = getCrsMatchesForStation(iata, keyword);
   if (!matches.length) return '';
-  const kw = keyword.toLowerCase();
+  const hlRe = getSearchHighlightRe(keyword);
   const typeColors = { OAPT: '#059669', SAPT: '#D97706', 'E-OAPT': '#2563EB', 'E-SAPT': '#7C3AED', CABS: '#6B7280' };
   const allConcerns = {};
   const typeCounts = {};
@@ -5856,7 +5998,7 @@ function renderSearchMatchHtml(iata, keyword, maxShow) {
   matches.slice(0, maxShow).forEach(r => {
     const typeColor = typeColors[r.t] || '#6B7280';
     const snippet = (r.rd || '').substring(0, 120);
-    const highlighted = snippet.replace(new RegExp('\\b' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi'), m => `<mark style="background:#FDE68A;padding:0 1px;border-radius:2px">${m}</mark>`);
+    const highlighted = hlRe ? snippet.replace(hlRe, m => `<mark style="background:#FDE68A;padding:0 1px;border-radius:2px">${m}</mark>`) : snippet;
     html += `<div style="margin-bottom:4px;padding:3px 0;border-bottom:1px solid #E5E7EB">`;
     html += `<span style="font-weight:600;color:#111827">${r.o || '?'}</span> `;
     html += `<span style="display:inline-block;padding:0 4px;border-radius:3px;background:${typeColor};color:#fff;font-size:0.65rem;font-weight:600">${r.t}</span>`;
@@ -6017,6 +6159,297 @@ function renderReportersPage() {
       <span class="adv-rpt-num ${openClass}">${r.open}</span>
       <span class="adv-rpt-type">${escHtml(r.topType)}</span>
       <span class="adv-rpt-type">${r.stationCount}</span>
+    </div>`;
+  }).join('');
+}
+
+let coverageSortKey = '-contractor';
+
+function parseOaptDate(str) {
+  if (typeof str !== 'string' || !str) return null;
+  const m = str.match(/^(\d{2})-(\d{2})-(\d{4})/);
+  if (!m) return null;
+  const [ , mm, dd, yyyy ] = m;
+  return new Date(+yyyy, +mm - 1, +dd);
+}
+
+// Shared, cached per-station coverage metrics (contractor vs WestJet, exposure-standardized efficiency).
+// Used by both the Contractor Coverage view and the map popups. Cache lives for the page lifetime
+// since CRS_MERGED_REPORTS only loads once.
+// Totals now span ALL report types (CABS, MINF, OAPT, SAPT, ICM, ...) sourced from CRS_MERGED_REPORTS,
+// which also covers stations with no OAPT feed (European/Mexican). Contractor reports have no importer
+// flag in the CRS feed, so they are identified by joining OAPT contractor report occurrence numbers
+// to the CRS reports (verified clean: contractor occs never share a WestJet occ).
+let _coverageMetricsCache = null;
+let _contractorOccSet = null;
+
+function _buildContractorOccSet() {
+  if (_contractorOccSet) return _contractorOccSet;
+  const set = new Set();
+  if (typeof OAPT_REPORTS !== 'undefined' && OAPT_REPORTS.reports) {
+    Object.values(OAPT_REPORTS.reports).forEach(reports => {
+      reports.forEach(r => { if (r.i === CONTRACTOR_IMPORTER) set.add(r.o); });
+    });
+  }
+  _contractorOccSet = set;
+  return set;
+}
+
+function computeCoverageMetrics() {
+  if (typeof CRS_MERGED_REPORTS === 'undefined' || !CRS_MERGED_REPORTS.length) return null;
+  if (_coverageMetricsCache) return _coverageMetricsCache;
+  ensureIcaoGlobal();
+  const stations = (loadData().stations) || {};
+  const contractorOccs = _buildContractorOccSet();
+  let globalMax = null;
+  const perStation = {};
+  CRS_MERGED_REPORTS.forEach(r => {
+    if (!r.c || r.c === 'ENRTE' || r.c === 'NA') return;
+    const iata = ICAO_TO_IATA_GLOBAL[r.c];
+    if (!iata) return;
+    let rec = perStation[iata];
+    if (!rec) {
+      const s = stations[iata] || {};
+      const flights = getFlightVolumeByDate(iata, '', '') || getFlightVolume({ iataCode: iata, name: s.name || iata }) || null;
+      rec = { iata, name: s.name || iata, region: getStationRegion(iata), contractor: 0, westjet: 0, lastContractor: null, lastWestjet: null, total: 0, flights, contractorByType: {} };
+      perStation[iata] = rec;
+    }
+    const d = r.dt ? new Date(r.dt) : null;
+    if (d && (!globalMax || d > globalMax)) globalMax = d;
+    rec.total++;
+    if (contractorOccs.has(r.o)) {
+      rec.contractor++;
+      const t = r.t || '(none)';
+      rec.contractorByType[t] = (rec.contractorByType[t] || 0) + 1;
+      if (d && (!rec.lastContractor || d > rec.lastContractor)) rec.lastContractor = d;
+    } else {
+      rec.westjet++;
+      if (d && (!rec.lastWestjet || d > rec.lastWestjet)) rec.lastWestjet = d;
+    }
+  });
+
+  // Network contractor reporting rate (contractor reports per flight) over all
+  // stations that have flight/exposure data. Expected reports at a station =
+  // its flight volume × this network rate, so efficiency = actual contractor
+  // reports ÷ expected × 100 (100% = reporting exactly at the network-average
+  // contractor rate for that station's flight volume).
+  let netContractor = 0;
+  let netFlights = 0;
+  Object.values(perStation).forEach(rec => {
+    if (rec.flights > 0) {
+      netContractor += rec.contractor;
+      netFlights += rec.flights;
+    }
+  });
+  const networkContractorRate = netFlights > 0 ? netContractor / netFlights : 0;
+
+  Object.values(perStation).forEach(rec => {
+    rec.contractorShare = rec.total ? (rec.contractor / rec.total) * 100 : 0;
+    rec.westjetShare = rec.total ? (rec.westjet / rec.total) * 100 : 0;
+    rec.rate1k = rec.flights > 0 ? (rec.total / rec.flights) * 1000 : null;
+    rec.expectedReports = rec.flights > 0 ? rec.flights * networkContractorRate : null;
+    rec.efficiency = rec.expectedReports !== null && rec.expectedReports > 0
+      ? (rec.contractor / rec.expectedReports) * 100
+      : null;
+  });
+
+  _coverageMetricsCache = { perStation, networkContractorRate, globalMax };
+  return _coverageMetricsCache;
+}
+
+function coveragePopupHtml(iata) {
+  const cm = computeCoverageMetrics();
+  const rec = cm?.perStation?.[iata];
+  if (!rec) return '';
+  const eff = rec.efficiency === null ? 'N/A' : rec.efficiency.toFixed(0) + '%';
+  const c = rec.contractorShare.toFixed(1) + '%';
+  const counts = `${rec.contractor} C / ${rec.westjet} W`;
+  const exp = rec.expectedReports !== null && rec.expectedReports !== undefined
+    ? ` · expected ${rec.expectedReports.toFixed(0)} C`
+    : '';
+  let typeBreakdown = '';
+  const types = Object.entries(rec.contractorByType).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  if (types.length) {
+    typeBreakdown = `<div style="margin-top:2px;color:#9CA3AF">Contractor by type: ${types.map(([t, n]) => `${t} ${n}`).join(' · ')}</div>`;
+  }
+  return `<div style="margin-top:2px;padding:3px 6px;background:#F0FDF4;border-radius:4px;border:1px solid #BBF7D0;font-size:0.75rem;color:#166534">
+    Efficiency: <strong>${eff}</strong> · Contractor: <strong>${c}</strong> <span style="color:#9CA3AF">(${counts}${exp})</span>
+    ${typeBreakdown}
+  </div>`;
+}
+
+function renderContractorCoverage() {
+  const listEl = document.getElementById('coverage-list');
+  if (typeof CRS_MERGED_REPORTS === 'undefined' || !CRS_MERGED_REPORTS.length) {
+    if (listEl) listEl.innerHTML = '<div class="empty-state">No report data available.</div>';
+    return;
+  }
+  if (!listEl) return;
+
+  const months = Math.max(1, Math.min(24, parseInt(document.getElementById('coverage-months')?.value, 10) || 3));
+  const regionFilter = document.getElementById('coverage-region')?.value || '';
+  const statusFilter = document.getElementById('coverage-status')?.value || '';
+  const searchFilter = (document.getElementById('coverage-search')?.value || '').toLowerCase().trim();
+
+  // Populate region dropdown once
+  const regSel = document.getElementById('coverage-region');
+  if (regSel && regSel.options.length <= 1) {
+    const regions = getActiveRegions();
+    regSel.innerHTML = '<option value="">All Regions</option>' +
+      regions.map(r => `<option value="${r}">${r}</option>`).join('');
+  }
+
+  // Shared per-station coverage metrics (contractor/westjet counts, efficiency)
+  const cm = computeCoverageMetrics();
+  if (!cm) {
+    if (listEl) listEl.innerHTML = '<div class="empty-state">No report data available.</div>';
+    return;
+  }
+  const perStation = cm.perStation;
+  const networkContractorRate = cm.networkContractorRate;
+  const netRate1k = networkContractorRate * 1000;
+
+  const ref = cm.globalMax || new Date();
+  const cutoff = new Date(ref);
+  cutoff.setMonth(cutoff.getMonth() - months);
+
+  const rows = Object.values(perStation).map(rec => {
+    const cActive = rec.lastContractor && rec.lastContractor >= cutoff;
+    const wActive = rec.lastWestjet && rec.lastWestjet >= cutoff;
+    let status;
+    if (cActive && wActive) status = 'both';
+    else if (cActive) status = 'active';
+    else if (wActive) status = 'westjet';
+    else status = 'none';
+    rec.status = status;
+    return rec;
+  });
+
+  // Filters
+  let filtered = rows;
+  if (regionFilter) filtered = filtered.filter(r => r.region === regionFilter);
+  if (statusFilter) filtered = filtered.filter(r => r.status === statusFilter);
+  if (searchFilter) filtered = filtered.filter(r =>
+    r.name.toLowerCase().includes(searchFilter) || r.iata.toLowerCase().includes(searchFilter)
+  );
+
+  // Sort
+  const desc = coverageSortKey.startsWith('-');
+  const key = desc ? coverageSortKey.slice(1) : coverageSortKey;
+  const val = (r) => {
+    switch (key) {
+      case 'name': return (r.name || '').toLowerCase();
+      case 'region': return (r.region || '').toLowerCase();
+      case 'efficiency': return r.efficiency === null ? -Infinity : r.efficiency;
+      case 'contractor': return r.contractor;
+      case 'westjet': return r.westjet;
+      case 'share': return r.contractorShare;
+      case 'lastContractor': return r.lastContractor ? r.lastContractor.getTime() : -Infinity;
+      case 'lastWestjet': return r.lastWestjet ? r.lastWestjet.getTime() : -Infinity;
+      default: return r.contractor;
+    }
+  };
+  filtered.sort((a, b) => {
+    const va = val(a), vb = val(b);
+    if (va < vb) return desc ? 1 : -1;
+    if (va > vb) return desc ? -1 : 1;
+    return (a.iata < b.iata ? -1 : 1);
+  });
+
+  // Summary
+  const activeCount = rows.filter(r => r.status === 'active' || r.status === 'both').length;
+  const westjetOnly = rows.filter(r => r.status === 'westjet').length;
+  const contractorTotal = rows.reduce((s, r) => s + r.contractor, 0);
+  const westjetTotal = rows.reduce((s, r) => s + r.westjet, 0);
+  const totalReports = contractorTotal + westjetTotal;
+  const scoredCount = rows.filter(r => r.efficiency !== null).length;
+  const sumEl = document.getElementById('coverage-summary');
+  if (sumEl) {
+    sumEl.innerHTML = `
+      <span class="coverage-chip"><b>${rows.length}</b> stations reporting</span>
+      <span class="coverage-chip coverage-chip-active"><b>${activeCount}</b> contractor active</span>
+      <span class="coverage-chip"><b>${westjetOnly}</b> WestJet only</span>
+      <span class="coverage-chip coverage-chip-contractor"><b>${contractorTotal.toLocaleString()}</b> contractor reports (${totalReports ? ((contractorTotal / totalReports) * 100).toFixed(1) : '0'}%)</span>
+      <span class="coverage-chip"><b>${westjetTotal.toLocaleString()}</b> WestJet reports</span>
+      <span class="coverage-chip"><b>${scoredCount}/${rows.length}</b> scored (has flight data)</span>
+      <span class="coverage-chip" title="Network-wide contractor reports per 1,000 flights. Expected contractor reports at a station = its flight volume × this rate; 100% efficiency = contractor reports exactly as expected."><b>${netRate1k.toFixed(1)}</b> contractor reports per 1k flights (network)</span>
+      <span class="coverage-chip"><b>${cutoff.toLocaleDateString('en-CA')}</b> active cutoff (${months} mo)</span>`;
+  }
+
+  const countEl = document.getElementById('coverage-count');
+  if (countEl) countEl.textContent = `${filtered.length} stations`;
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = '<div class="empty-state" style="padding:2rem">No stations match your filters.</div>';
+    return;
+  }
+
+  const sortArrow = (k) => {
+    const cur = coverageSortKey.replace('-', '');
+    const d = coverageSortKey.startsWith('-');
+    return cur === k ? (d ? ' ↓' : ' ↑') : '';
+  };
+  const fmtDate = (d) => d ? d.toLocaleDateString('en-CA') : '—';
+  const cTypeTooltip = (r) => {
+    const types = Object.entries(r.contractorByType || {}).sort((a, b) => b[1] - a[1]);
+    if (!types.length) return 'No contractor reports';
+    return 'Contractor reports by type:\n' + types.map(([t, n]) => `  ${t}: ${n}`).join('\n');
+  };
+  const badge = (r) => {
+    const map = {
+      active: ['coverage-badge-active', 'Contractor Active'],
+      both: ['coverage-badge-both', 'Both Active'],
+      westjet: ['coverage-badge-westjet', 'WestJet Only'],
+      none: ['coverage-badge-none', 'No Recent Reports'],
+    };
+    const [cls, label] = map[r.status];
+    return `<span class="coverage-badge ${cls}">${label}</span>`;
+  };
+  const effBar = (r) => {
+    if (r.efficiency === null) {
+      return `<div class="coverage-eff"><span class="coverage-eff-na" title="No flight/exposure data for this station">N/A</span></div>`;
+    }
+    // Track 0..200% of expected; 50% mark = 100% efficiency (exactly expected).
+    // Fill = actual ÷ expected (capped at 200% of track).
+    const totalW = Math.min(r.efficiency, 200) / 2; // % of track filled
+    const cW = totalW;
+    const wW = 0;
+    const color = r.efficiency >= 100 ? '#22C55E' : r.efficiency >= 50 ? '#F59E0B' : '#EF4444';
+    return `
+      <div class="coverage-eff">
+        <div class="coverage-eff-track">
+          <span class="coverage-eff-med"></span>
+          <span class="coverage-eff-fill" style="width:${totalW}%">
+            <span class="coverage-eff-wj" style="width:${wW}%"></span>
+            <span class="coverage-eff-c" style="width:${cW}%"></span>
+          </span>
+        </div>
+        <span class="coverage-eff-num" style="color:${color}" title="${r.contractor} contractor reports vs ${r.expectedReports.toFixed(1)} expected = ${r.efficiency.toFixed(0)}% of network contractor rate (${netRate1k.toFixed(1)} per 1k flights)">${r.efficiency.toFixed(0)}%</span>
+      </div>`;
+  };
+
+  listEl.innerHTML = `
+    <div class="coverage-header" style="grid-template-columns:1.3fr 1fr 140px 80px 80px 70px 110px 110px 120px">
+      <span class="adv-rpt-name coverage-sortable" data-sort="name">Station${sortArrow('name')}</span>
+      <span class="adv-rpt-type coverage-sortable" data-sort="region">Region${sortArrow('region')}</span>
+      <span class="adv-rpt-num coverage-sortable" data-sort="efficiency" title="Contractor reports ÷ expected (flight volume × network contractor rate per flight). 100% = contractor reports exactly as expected for that flight volume. N/A = no flight data.">Efficiency${sortArrow('efficiency')}</span>
+      <span class="adv-rpt-num coverage-sortable" data-sort="contractor">Contractor${sortArrow('contractor')}</span>
+      <span class="adv-rpt-num coverage-sortable" data-sort="westjet">WestJet${sortArrow('westjet')}</span>
+      <span class="adv-rpt-num coverage-sortable" data-sort="share">C%${sortArrow('share')}</span>
+      <span class="adv-rpt-num coverage-sortable" data-sort="lastContractor">Last C${sortArrow('lastContractor')}</span>
+      <span class="adv-rpt-num coverage-sortable" data-sort="lastWestjet">Last W${sortArrow('lastWestjet')}</span>
+      <span class="adv-rpt-type">Status</span>
+    </div>` + filtered.map(r => {
+    return `<div class="advisor-reporter-row coverage-row" style="grid-template-columns:1.3fr 1fr 140px 80px 80px 70px 110px 110px 120px">
+      <span class="adv-rpt-name">${escHtml(r.name)} <span style="color:var(--color-text-muted);font-size:0.7rem">${r.iata}</span></span>
+      <span class="adv-rpt-type">${escHtml(r.region || '—')}</span>
+      <span class="adv-rpt-num">${effBar(r)}</span>
+      <span class="adv-rpt-num ${r.contractor > 0 ? 'coverage-num-contractor' : ''}" title="${escHtml(cTypeTooltip(r))}">${r.contractor}</span>
+      <span class="adv-rpt-num">${r.westjet}</span>
+      <span class="adv-rpt-num">${r.contractorShare.toFixed(1)}%</span>
+      <span class="adv-rpt-num ${r.lastContractor ? '' : 'adv-rpt-type'}">${fmtDate(r.lastContractor)}</span>
+      <span class="adv-rpt-num ${r.lastWestjet ? '' : 'adv-rpt-type'}">${fmtDate(r.lastWestjet)}</span>
+      <span class="adv-rpt-status-cell">${badge(r)}</span>
     </div>`;
   }).join('');
 }
@@ -6560,6 +6993,9 @@ function renderDashboard() {
     : '<div class="empty-state" style="padding:1rem">No hazard data available yet to suggest actions.</div>';
 
   renderSafetyAdvisors(stations);
+
+  // Network risk forecast
+  renderNetworkForecast();
 }
 
 // ─── Export ───────────────────────────────────────────────────────────────────
@@ -7221,6 +7657,162 @@ function renderStationIcaoContext(station) {
   `;
 }
 
+// ─── Risk Forecast (TimesFM) ──────────────────────────────────────────────────
+
+function loadRiskForecast(cb) {
+  if (RISK_FORECAST_DATA) { cb(); return; }
+  if (window.RISK_FORECAST_DATA) { RISK_FORECAST_DATA = window.RISK_FORECAST_DATA; cb(); return; }
+  fetch('data/risk_forecast.json')
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(d => { RISK_FORECAST_DATA = d; cb(); })
+    .catch(() => { cb(); });
+}
+
+function forecastTierClass(tier) {
+  const map = { 'Very High': 'vhigh', 'High': 'high', 'Medium': 'medium', 'Low': 'low' };
+  return map[tier] || 'medium';
+}
+
+function forecastBlockHtml(block) {
+  if (!block) return ['—', '—', ''];
+  const range = block.p10 != null && block.p90 != null
+    ? `${block.p10.toFixed(2)} – ${block.p90.toFixed(2)}`
+    : '';
+  return [block.point.toFixed(2), block.tier || '—', range];
+}
+
+function forecastStatHtml(label, value, tier, range) {
+  const rangeHtml = range ? `<span class="forecast-stat-range">${range}</span>` : '';
+  return `
+    <div class="forecast-stat">
+      <span class="forecast-stat-label">${label}</span>
+      <span class="forecast-stat-value">${value}</span>
+      <span class="forecast-stat-tier tier-${forecastTierClass(tier)}">${tier}</span>
+      ${rangeHtml}
+    </div>`;
+}
+
+function forecastSeriesDates(startDate, n) {
+  const out = [];
+  const start = new Date(startDate + 'T00:00:00Z');
+  for (let i = 0; i < n; i++) {
+    const d = new Date(start);
+    d.setUTCDate(start.getUTCDate() + i);
+    out.push(d.toISOString().slice(0, 10));
+  }
+  return out;
+}
+
+function buildForecastChart(ctx, historyLabels, history, fc, color) {
+  const bandColor = color + '30';
+  const fdates = fc.dates || [];
+  const histLen = history.length;
+  const allLabels = [...historyLabels, ...fdates]
+    .map(d => new Date(d + 'T00:00:00Z').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }));
+  const histData = [...history, ...new Array(fdates.length).fill(null)];
+  const fcData = [...new Array(histLen).fill(null), ...fc.point];
+  const datasets = [];
+  if (fc.quantiles) {
+    const p10 = [...new Array(histLen).fill(null), ...fc.quantiles.map(q => q[1])];
+    const p90 = [...new Array(histLen).fill(null), ...fc.quantiles.map(q => q[9])];
+    datasets.push({
+      label: 'p10', data: p10, borderWidth: 0, pointRadius: 0, tension: 0.3,
+      borderColor: 'transparent', backgroundColor: 'transparent', fill: false, order: 3,
+    });
+    datasets.push({
+      label: 'p10–p90', data: p90, borderWidth: 0, pointRadius: 0, tension: 0.3,
+      borderColor: 'transparent', backgroundColor: bandColor, fill: '-1', order: 3,
+    });
+  }
+  datasets.push({
+    label: 'Observed', data: histData, borderColor: color, borderWidth: 2,
+    pointRadius: 0, tension: 0.3, fill: false, order: 2,
+  });
+  datasets.push({
+    label: 'Forecast', data: fcData, borderColor: '#8B5CF6', borderWidth: 2,
+    borderDash: [5, 3], pointRadius: 0, tension: 0.3, fill: false, order: 1,
+  });
+  return new Chart(ctx, {
+    type: 'line',
+    data: { labels: allLabels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { boxWidth: 12, font: { size: 10 } } },
+      },
+      scales: {
+        y: { grid: { color: 'rgba(0,0,0,0.06)' } },
+        x: {
+          grid: { display: false },
+          ticks: { maxTicksLimit: 10, font: { size: 9 } },
+        },
+      },
+    },
+  });
+}
+
+function renderNetworkForecast() {
+  const panel = document.getElementById('dash-forecast-panel');
+  if (!panel) return;
+  loadRiskForecast(() => {
+    const net = RISK_FORECAST_DATA && RISK_FORECAST_DATA.network;
+    if (!net || !net.forecast) { panel.style.display = 'none'; return; }
+    panel.style.display = 'block';
+    const f = net.forecast;
+    const h3 = forecastBlockHtml(f['3_months']);
+    const h6 = forecastBlockHtml(f['6_months']);
+    const h12 = forecastBlockHtml(f['1_year']);
+    document.getElementById('dash-forecast-stats').innerHTML =
+      forecastStatHtml('Current', net.current.toFixed(2), net.current_tier, '') +
+      forecastStatHtml('3 Months', h3[0], h3[1], h3[2]) +
+      forecastStatHtml('6 Months', h6[0], h6[1], h6[2]) +
+      forecastStatHtml('1 Year', h12[0], h12[1], h12[2]);
+    const meta = RISK_FORECAST_DATA.meta || {};
+    document.getElementById('dash-forecast-note').textContent =
+      `Network SMPRI forecast by Google TimesFM 2.5 (200M). Generated ${meta.generated_at || '—'} from daily data ${meta.data_from || ''} → ${meta.data_to || ''}. Shaded band = 10th–90th percentile; band collapses at far horizons on near-constant series.`;
+    if (!_netForecastBuilt) {
+      const canvas = document.getElementById('dash-forecast-chart');
+      if (canvas && typeof Chart !== 'undefined') {
+        if (networkForecastChart) networkForecastChart.destroy();
+        networkForecastChart = buildForecastChart(canvas.getContext('2d'), net.dates, net.history, f, '#3B82F6');
+        _netForecastBuilt = true;
+      }
+    }
+  });
+}
+
+function renderDetailForecast(station) {
+  const panel = document.getElementById('detail-forecast-panel');
+  if (!panel) return;
+  loadRiskForecast(() => {
+    const sf = (RISK_FORECAST_DATA && RISK_FORECAST_DATA.stations)
+      ? RISK_FORECAST_DATA.stations[station.iataCode] : null;
+    if (!sf || !sf.forecast) { panel.style.display = 'none'; return; }
+    panel.style.display = 'block';
+    const f = sf.forecast;
+    const h3 = forecastBlockHtml(f['3_months']);
+    const h6 = forecastBlockHtml(f['6_months']);
+    const h12 = forecastBlockHtml(f['1_year']);
+    document.getElementById('detail-forecast-stats').innerHTML =
+      forecastStatHtml('Current', sf.current.toFixed(2), sf.current_tier, '') +
+      forecastStatHtml('3 Months', h3[0], h3[1], h3[2]) +
+      forecastStatHtml('6 Months', h6[0], h6[1], h6[2]) +
+      forecastStatHtml('1 Year', h12[0], h12[1], h12[2]);
+    const meta = RISK_FORECAST_DATA.meta || {};
+    const cred = sf.credibility != null ? Math.round(sf.credibility * 100) + '%' : '—';
+    document.getElementById('detail-forecast-note').textContent =
+      `SMPRI forecast by Google TimesFM 2.5 (200M). Raw occurrence rate ${sf.raw_rate != null ? sf.raw_rate.toFixed(2) : '—'}/1000 flights, credibility ${cred}, ${sf.flights_90d != null ? sf.flights_90d : '—'} flights (90d). Generated ${meta.generated_at || '—'}.`;
+    const canvas = document.getElementById('detail-forecast-chart');
+    if (canvas && typeof Chart !== 'undefined') {
+      if (detailForecastChart) detailForecastChart.destroy();
+      const histDates = forecastSeriesDates(meta.data_from || '2026-01-01', sf.history.length);
+      detailForecastChart = buildForecastChart(canvas.getContext('2d'), histDates, sf.history, f, '#3B82F6');
+    }
+  });
+}
+
 // ─── Station Detail ────────────────────────────────────────────────────────────
 
 function renderStationDetail(iata) {
@@ -7283,6 +7875,9 @@ function renderStationDetail(iata) {
 
   // Occurrence reports
   renderOccurrenceReports(iata);
+
+  // Risk forecast
+  renderDetailForecast(station);
 }
 
 function renderDetailScoreChart(station) {
@@ -8223,6 +8818,7 @@ function init() {
       if (tab.dataset.view === 'map') renderStationMap();
       if (tab.dataset.view === 'dist') renderNetworkDistribution();
       if (tab.dataset.view === 'reporters') renderReportersPage();
+      if (tab.dataset.view === 'coverage') renderContractorCoverage();
       if (tab.dataset.view === 'import') { /* static UI, no render needed */ }
       if (tab.dataset.view === 'issues') { renderCrsMergedIssues(); }
       if (tab.dataset.view === 'settings') renderSettings();
@@ -8414,6 +9010,21 @@ function init() {
       renderAdvisorAnalysis(link.dataset.advisor, link.dataset.region || '');
     }
   });
+  document.getElementById('coverage-view')?.addEventListener('input', e => {
+    if (e.target.id === 'coverage-months' || e.target.id === 'coverage-search') renderContractorCoverage();
+  });
+  document.getElementById('coverage-view')?.addEventListener('change', e => {
+    if (e.target.id === 'coverage-region' || e.target.id === 'coverage-status') renderContractorCoverage();
+  });
+  document.getElementById('coverage-view')?.addEventListener('click', e => {
+    const th = e.target.closest('[data-sort]');
+    if (th) {
+      e.preventDefault();
+      const key = th.dataset.sort;
+      coverageSortKey = coverageSortKey === key ? '-' + key : key;
+      renderContractorCoverage();
+    }
+  });
   document.getElementById('issues-view')?.addEventListener('click', e => {
     const regionCard = e.target.closest('.dash-issues-region');
     if (regionCard && regionCard.dataset.region) {
@@ -8574,12 +9185,7 @@ function renderCrsMergedIssues() {
     if (airlineFilter && r.al !== airlineFilter) return false;
     if (aircraftFilter && r.ac !== aircraftFilter) return false;
     if (searchFilter) {
-      const kwRe = new RegExp('\\b' + searchFilter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
-      const inConcerns = r._nLow && kwRe.test(r._nLow);
-      const inDesc = r._rdLow && kwRe.test(r._rdLow);
-      const inSearch = r._stLow && kwRe.test(r._stLow);
-      const inOccNo = r._oLow && kwRe.test(r._oLow);
-      if (!inConcerns && !inDesc && !inSearch && !inOccNo) return false;
+      if (!recordMatchesQuery(r, searchFilter)) return false;
     }
     return true;
   });
@@ -9271,6 +9877,8 @@ function setupImportUI() {
   // Lazy-load large data files after initial render
   _lazyLoadScript('data/oapt_reports.js', () => {
     if (document.getElementById('reporters-view')?.classList.contains('active')) renderReportersPage();
+    if (document.getElementById('coverage-view')?.classList.contains('active')) renderContractorCoverage();
+    if (document.getElementById('map-view')?.classList.contains('active')) renderStationMap();
     if (document.getElementById('detail-view')?.classList.contains('active')) {
       const iata = document.getElementById('detail-view').dataset.iata;
       if (iata) renderOccurrenceReports(iata);
@@ -9282,6 +9890,7 @@ function setupImportUI() {
     if (document.getElementById('issues-view')?.classList.contains('active')) renderCrsMergedIssues();
     if (document.getElementById('map-view')?.classList.contains('active')) renderStationMap();
     if (document.getElementById('dist-view')?.classList.contains('active')) renderNetworkDistribution();
+    if (document.getElementById('coverage-view')?.classList.contains('active')) renderContractorCoverage();
     renderDashboard();
     renderStationList();
     renderRankings();

@@ -65,6 +65,7 @@
     <button class="tab" data-view="dist" id="tab-dist">Distribution</button>
     <button class="tab" data-view="issues" id="tab-issues">Issues</button>
     <button class="tab" data-view="reporters" id="tab-reporters">Reporters</button>
+    <button class="tab" data-view="coverage" id="tab-coverage">Contractor Coverage</button>
     <button class="tab" data-view="import" id="tab-import">Import Data</button>
     <button class="tab" data-view="icao" id="tab-icao">ICAO Lookup</button>
     <button class="tab" data-view="settings" id="tab-settings">Settings</button>
@@ -107,6 +108,15 @@
             <span class="dash-card-label">High / Very High Risk</span>
           </div>
         </div>
+      </div>
+
+      <div class="dash-panel dash-panel-forecast" id="dash-forecast-panel" style="display:none">
+        <h3>Network Risk Forecast <span class="dash-part-sub">TimesFM predictive model · next 12 months</span></h3>
+        <div class="forecast-stats" id="dash-forecast-stats"></div>
+        <div class="chart-container forecast-chart">
+          <canvas id="dash-forecast-chart"></canvas>
+        </div>
+        <div class="forecast-note" id="dash-forecast-note"></div>
       </div>
 
       <div class="dash-region-grid" id="dash-region-grid">
@@ -264,6 +274,16 @@
         <div class="detail-panel detail-panel-hazards">
           <h3>Top Hazards</h3>
           <div id="detail-hazards" class="detail-hazards-list"></div>
+        </div>
+
+        <!-- Risk Forecast -->
+        <div class="detail-panel detail-panel-forecast" id="detail-forecast-panel" style="display:none">
+          <h3>Risk Forecast <span class="dash-part-sub">TimesFM predictive model · next 12 months</span></h3>
+          <div class="forecast-stats" id="detail-forecast-stats"></div>
+          <div class="chart-container forecast-chart">
+            <canvas id="detail-forecast-chart"></canvas>
+          </div>
+          <div class="forecast-note" id="detail-forecast-note"></div>
         </div>
 
         <!-- Summary -->
@@ -882,7 +902,11 @@
           </div>
           <div class="map-filter-group">
             <label>Search</label>
-            <input type="text" id="map-keyword-search" placeholder="Concerns, description..." class="filter-input" style="width:180px;font-size:0.75rem">
+            <select id="map-search-preset" class="filter-select" style="width:auto;font-size:0.75rem;padding:2px 6px">
+              <option value="">Presets…</option>
+              <option value="safety-vest">Safety vest</option>
+            </select>
+            <input type="text" id="map-keyword-search" placeholder="Concerns, description…  | = OR · - = exclude · &quot;…&quot; = phrase" class="filter-input" style="width:180px;font-size:0.75rem">
           </div>
         </div>
       </div>
@@ -986,6 +1010,36 @@
       <div id="reporters-page-list" class="advisor-reporters-list" style="max-height:calc(100vh - 240px)"></div>
     </section>
 
+    <!-- ── Contractor vs WestJet Coverage ─────────────────────────────────── -->
+    <section id="coverage-view" class="view" aria-label="Contractor vs WestJet reporting coverage">
+      <h2>Contractor Reporting Coverage</h2>
+      <p style="font-size:0.8rem;color:var(--color-text-muted);margin-bottom:0.75rem">
+        Reports imported by the contractor CRS API account (<code style="font-size:0.75rem">t1-crsapi_p</code>) vs all other WestJet reporters — per station.
+        Efficiency is exposure-standardized: log(reports per 1,000 flights + 1) vs the network median (100% = median), normalized so the distribution is usable; the bar splits contractor vs WestJet share.
+      </p>
+      <div class="reporters-page-filters" style="flex-wrap:wrap">
+        <label style="font-size:0.75rem;color:var(--color-text-muted);white-space:nowrap;display:flex;align-items:center;gap:0.35rem">
+          Active window:
+          <input type="number" id="coverage-months" class="filter-input" value="3" min="1" max="24" style="width:64px">
+          months
+        </label>
+        <select id="coverage-region" class="filter-select">
+          <option value="">All Regions</option>
+        </select>
+        <select id="coverage-status" class="filter-select">
+          <option value="">All Status</option>
+          <option value="active">Contractor Active</option>
+          <option value="westjet">WestJet Only</option>
+          <option value="both">Both Active</option>
+          <option value="none">No Recent Reports</option>
+        </select>
+        <input type="text" id="coverage-search" class="filter-input" placeholder="Search station or code...">
+        <span id="coverage-count" style="font-size:0.8rem;color:var(--color-text-muted)"></span>
+      </div>
+      <div id="coverage-summary" class="coverage-summary" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem"></div>
+      <div id="coverage-list" class="advisor-reporters-list" style="max-height:calc(100vh - 280px)"></div>
+    </section>
+
     <!-- ── CRS + OAPT Issues by Region ────────────────────────────────────── -->
     <section id="issues-view" class="view" aria-label="CRS OAPT Issues by Region">
       <div class="dash-panel dash-issues-panel">
@@ -1007,7 +1061,11 @@
           <input type="date" id="dash-issues-date-from" class="filter-input" style="width:130px">
           <label class="dash-issues-date-label" style="font-size:0.7rem;color:var(--color-text-muted);white-space:nowrap">To</label>
           <input type="date" id="dash-issues-date-to" class="filter-input" style="width:130px">
-          <input type="text" id="dash-issues-search" class="filter-input" placeholder="Search concerns or description...">
+          <input type="text" id="dash-issues-search" class="filter-input" placeholder="Search…  | = OR · - = exclude · &quot;…&quot; = phrase">
+          <select id="dash-issues-search-preset" class="filter-select">
+            <option value="">Presets…</option>
+            <option value="safety-vest">Safety vest</option>
+          </select>
           <span class="dash-issues-count" id="dash-issues-total">0 records</span>
         </div>
         <div class="dash-issues-regions" id="dash-issues-regions"></div>
