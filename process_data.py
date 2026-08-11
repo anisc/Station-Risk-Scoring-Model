@@ -277,32 +277,35 @@ def process_crs(oapt_data=None):
                     oapt_by_base[base].append(r)
 
     records = []
-    seen_type_occ = set()
 
-    for row_idx, row in enumerate(rows, 1):
-        def g(field):
-            v = row.get(field, '')
-            if v is None:
-                return ''
-            return str(v).strip() if not isinstance(v, (int, float)) else str(v).strip()
+    def g(row, field):
+        v = row.get(field, '')
+        if v is None:
+            return ''
+        return str(v).strip() if not isinstance(v, (int, float)) else str(v).strip()
 
-        occ_no = g('OccNo')
+    # Group raw rows by (occ_no, occ_type). One occurrence can have multiple
+    # descriptor-set rows (DescriptorSet/Level_1/Level_2/...), so we keep every
+    # distinct descriptor row and only merge the OAPT description once per group.
+    groups = {}
+    for row in rows:
+        occ_no = g(row, 'OccNo')
         if not occ_no:
             continue
-        occ_type = g('OccType')
+        occ_type = g(row, 'OccType')
         if not occ_type or not re.match(r'^[A-Z][A-Z0-9\-]+$', occ_type):
             continue
-        dedup_key = (occ_no, occ_type)
-        if dedup_key in seen_type_occ:
-            continue
-        seen_type_occ.add(dedup_key)
+        groups.setdefault((occ_no, occ_type), []).append(row)
 
-        city = g('Incident City').upper()
-        dep = g('Dep City').upper()
-        arr = g('Arr City').upper()
+    for (occ_no, occ_type), group in groups.items():
+        row0 = group[0]
+
+        city = g(row0, 'Incident City').upper()
+        dep = g(row0, 'Dep City').upper()
+        arr = g(row0, 'Arr City').upper()
 
         # Get description from CRS or OAPT (use OccDesc if ReportDesc is too short)
-        crs_desc = g('Description')
+        crs_desc = g(row0, 'Description')
         oapt_desc_val = oapt_desc.get(occ_no, '')
         # Also grab OccDesc for search
         oapt_occ_desc = ''
@@ -341,34 +344,51 @@ def process_crs(oapt_data=None):
         # Determine region from city code (ICAO prefix)
         region = get_region_from_icao(city) or get_region_from_icao(dep) or get_region_from_icao(arr) or 'Western Canada & Mexico'
 
+        # Collect every distinct descriptor-set row for this occurrence
+        ds = []
+        seen_ds = set()
+        for row in group:
+            dd = g(row, 'Descriptor Set')
+            if not dd:
+                continue
+            entry = {
+                'd': dd,
+                'l1': g(row, 'Level 1'),
+                'l2': g(row, 'Level 2'),
+                'l3': g(row, 'Level 3'),
+                'rl': g(row, 'Risk Level'),
+                'h1': g(row, 'HFACS Lvl 1'),
+                'h2': g(row, 'HFACS Lvl 2'),
+                'h3': g(row, 'HFACS Lvl 3'),
+            }
+            ds_key = (entry['d'], entry['l1'], entry['l2'], entry['rl'], entry['h1'])
+            if ds_key in seen_ds:
+                continue
+            seen_ds.add(ds_key)
+            ds.append(entry)
+
         record = {
             'o': occ_no,
-            't': g('OccType'),
-            'd': g('Descriptor Set'),
-            'l1': g('Level 1'),
-            'l2': g('Level 2'),
-            'l3': g('Level 3'),
-            'rl': g('Risk Level'),
-            'h1': g('HFACS Lvl 1'),
-            'h2': g('HFACS Lvl 2'),
-            'h3': g('HFACS Lvl 3'),
+            't': occ_type,
+            'd': ds[0]['d'] if ds else '',
+            'ds': [{k: v for k, v in e.items() if v} for e in ds],
             'c': city,
             'r': region,
             'n': concerns,
             'rc': report_count,
-            'f': g('Flight No'),
-            'dt': str(g('Occ Date')),
+            'f': g(row0, 'Flight No'),
+            'dt': str(g(row0, 'Occ Date')),
             'dep': dep,
             'arr': arr,
             'rd': rd[:1000] if rd else '',
             'st': search_text,
-            'al': g('Airline'),
-            'ac': g('AC Model'),
+            'al': g(row0, 'Airline'),
+            'ac': g(row0, 'AC Model'),
         }
         records.append(record)
 
     fdwtr_after = sum(1 for r in records if r['t'] == 'FDWTR')
-    print(f"CRS records after dedup: {len(records)}, FDWTR after dedup: {fdwtr_after}")
+    print(f"CRS records: {len(records)}, FDWTR: {fdwtr_after}")
 
     # Build IATA→region mapping from OAPT data using ICAO→IATA conversion
     iata_regions = {}

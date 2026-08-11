@@ -1078,7 +1078,8 @@ function _computeAllRiskScores(dateFrom, dateTo) {
     const stationRecords = CRS_MERGED_REPORTS.filter(r => {
       if (!matchingIcaos.has(r.c) || !OAPT_SAPT_TYPES.has(r.t)) return false;
       if (r.t === 'SAPT') {
-        if ((r.rl || '') === 'Not Set' || (r.rl || '') === '') return false;
+        const rl = _recordRl(r);
+        if (rl === 'Not Set' || rl === '') return false;
       }
       if (dateFrom || dateTo) {
         const dt = (r.dt || '').substring(0, 10);
@@ -1102,7 +1103,7 @@ function _computeAllRiskScores(dateFrom, dateTo) {
       if (seen.has(r.o)) return;
       seen.add(r.o);
       if (r.t === 'OAPT') oaptCount++;
-      const baseWeight = r.t === 'OAPT' ? OAPT_WEIGHT : (RISK_LEVEL_WEIGHTS[r.rl] || 0);
+      const baseWeight = r.t === 'OAPT' ? OAPT_WEIGHT : (RISK_LEVEL_WEIGHTS[_recordRl(r)] || 0);
       weightSum += baseWeight;
       const occDate = r.dt ? new Date(r.dt.substring(0, 10)) : null;
       const deltaDays = occDate ? Math.max(0, (now - occDate.getTime()) / 86400000) : 180;
@@ -1116,7 +1117,7 @@ function _computeAllRiskScores(dateFrom, dateTo) {
     saptRecords.forEach(r => {
       if (saptSeen.has(r.o)) return;
       saptSeen.add(r.o);
-      saptWeightSum += RISK_LEVEL_WEIGHTS[r.rl] || 0;
+      saptWeightSum += RISK_LEVEL_WEIGHTS[_recordRl(r)] || 0;
     });
     const saptRiskPerHazard = saptSeen.size > 0 ? (saptWeightSum / saptSeen.size) : 0;
 
@@ -3635,8 +3636,10 @@ function populateMapIssueFilters() {
   const typeDescMap = {};
   CRS_MERGED_REPORTS.forEach(r => {
     if (r.t) types.add(r.t);
-    if (r.d) { descriptors.add(r.d); if (r.t) { if (!typeDescMap[r.t]) typeDescMap[r.t] = new Set(); typeDescMap[r.t].add(r.d); } }
-    if (r.h1) hfacs.add(r.h1);
+    _recordDsList(r).forEach(ds => {
+      if (ds.d) { descriptors.add(ds.d); if (r.t) { if (!typeDescMap[r.t]) typeDescMap[r.t] = new Set(); typeDescMap[r.t].add(ds.d); } }
+      if (ds.h1) hfacs.add(ds.h1);
+    });
   });
   _mapTypeDescMap = typeDescMap;
 
@@ -5555,8 +5558,8 @@ function renderMapIssuesMode(stations, regFilter) {
   // Filter records
   const filtered = CRS_MERGED_REPORTS.filter(r => {
     if (typeFilter && r.t !== typeFilter) return false;
-    if (descFilter && !matchesDescriptorFamily(r.d, descFilter)) return false;
-    if (hfacsFilter && r.h1 !== hfacsFilter) return false;
+    if (descFilter && !recordHasDescriptor(r, descFilter)) return false;
+    if (hfacsFilter && !recordHasHfacs(r, hfacsFilter)) return false;
     if (airlineFilter && r.al !== airlineFilter) return false;
     if (aircraftFilter && r.ac !== aircraftFilter) return false;
     if (dateFrom || dateTo) {
@@ -5683,8 +5686,8 @@ function renderMapIssuesMode(stations, regFilter) {
       const matching = CRS_MERGED_REPORTS.filter(r => {
         if (r.c !== icao) return false;
         if (r.t !== type) return false;
-        if (descFilter && !matchesDescriptorFamily(r.d, descFilter)) return false;
-        if (hfacsFilter && r.h1 !== hfacsFilter) return false;
+        if (descFilter && !recordHasDescriptor(r, descFilter)) return false;
+        if (hfacsFilter && !recordHasHfacs(r, hfacsFilter)) return false;
         if (dateFrom || dateTo) {
           const dt = (r.dt || '').substring(0, 10);
           if (!dt) return false;
@@ -5898,7 +5901,7 @@ function searchPhraseRe(phrase) {
 }
 
 function recordSearchText(r) {
-  return [r._nLow, r._rdLow, r._stLow, r._oLow].filter(Boolean).join(' ');
+  return [r._nLow, r._rdLow, r._stLow, r._dsLow, r._oLow].filter(Boolean).join(' ');
 }
 
 function recordMatchesQuery(r, query) {
@@ -8819,6 +8822,7 @@ function _precomputeCrsSearchText() {
     r._nLow = (r.n || []).join(' ').toLowerCase();
     r._rdLow = (r.rd || '').toLowerCase();
     r._stLow = (r.st || '').toLowerCase();
+    r._dsLow = _recordDsList(r).map(ds => [ds.d, ds.l1, ds.l2, ds.l3, ds.rl, ds.h1].filter(Boolean).join(' ')).join(' ').toLowerCase();
     r._oLow = (r.o || '').toLowerCase();
   });
 }
@@ -9170,23 +9174,51 @@ let _issuesL1Filter = null;
 let _issuesL2Filter = null;
 let _issuesFilteredRecords = [];
 
-// Descriptor families: selecting one member also matches the other related safety descriptors
-const SAFETY_DESCRIPTOR_FAMILY = new Set([
-  'Safety Descriptors',
-  'Safety Self-Report',
-  'Hazard Report',
-  'SINF Threats',
-  'Inflight Safety Incident or Hazard',
-]);
-
-function matchesDescriptorFamily(recordDesc, selectedDesc) {
-  if (!selectedDesc) return true;
-  if (recordDesc === selectedDesc) return true;
-  if (SAFETY_DESCRIPTOR_FAMILY.has(selectedDesc) && SAFETY_DESCRIPTOR_FAMILY.has(recordDesc)) return true;
-  return false;
-}
-
 let _dashTypeDescMap = {};
+
+// Records now carry a `ds` array of all descriptor-set rows (Descriptor Set,
+// Level 1/2/3, Risk Level, HFACS). These helpers make the app agnostic of the
+// single-vs-multi descriptor format.
+function _recordDsList(r) {
+  if (r && r.ds && r.ds.length) return r.ds;
+  if (r && r.d) return [{ d: r.d, l1: r.l1, l2: r.l2, l3: r.l3, rl: r.rl, h1: r.h1, h2: r.h2, h3: r.h3 }];
+  return [];
+}
+function _recordPrimaryDs(r) {
+  return _recordDsList(r)[0] || null;
+}
+function _recordDescSet(r, desc) {
+  if (!desc) return null;
+  return _recordDsList(r).find(ds => ds.d === desc) || null;
+}
+function _recordDsEntryFor(r, desc, l1) {
+  let list = _recordDsList(r);
+  if (desc) list = list.filter(ds => ds.d === desc);
+  if (l1) list = list.filter(ds => ds.l1 === l1);
+  return list[0] || null;
+}
+function recordHasDescriptor(r, desc) {
+  if (!desc) return false;
+  return _recordDsList(r).some(ds => ds.d === desc);
+}
+function recordHasHfacs(r, h) {
+  if (!h) return false;
+  return _recordDsList(r).some(ds => ds.h1 === h);
+}
+function recordMatchesHierarchy(r) {
+  const list = _recordDsList(r);
+  if (list.length === 0) return !(_issuesDescSetFilter || _issuesL1Filter || _issuesL2Filter);
+  return list.some(ds => {
+    if (_issuesDescSetFilter && ds.d !== _issuesDescSetFilter) return false;
+    if (_issuesL1Filter && ds.l1 !== _issuesL1Filter) return false;
+    if (_issuesL2Filter && ds.l2 !== _issuesL2Filter) return false;
+    return true;
+  });
+}
+function _recordRl(r) {
+  const p = _recordPrimaryDs(r);
+  return p ? (p.rl || '') : '';
+}
 
 function initCrsMergedIssues() {
   if (typeof CRS_MERGED_REPORTS === 'undefined' || !CRS_MERGED_REPORTS.length) return;
@@ -9199,8 +9231,10 @@ function initCrsMergedIssues() {
   const typeDescMap = {};
   CRS_MERGED_REPORTS.forEach(r => {
     if (r.t) types.add(r.t);
-    if (r.d) { descriptors.add(r.d); if (r.t) { if (!typeDescMap[r.t]) typeDescMap[r.t] = new Set(); typeDescMap[r.t].add(r.d); } }
-    if (r.h1) hfacs.add(r.h1);
+    _recordDsList(r).forEach(ds => {
+      if (ds.d) { descriptors.add(ds.d); if (r.t) { if (!typeDescMap[r.t]) typeDescMap[r.t] = new Set(); typeDescMap[r.t].add(ds.d); } }
+      if (ds.h1) hfacs.add(ds.h1);
+    });
     if (r.c && r.c !== 'ENRTE') stations.add(r.c);
   });
   _dashTypeDescMap = typeDescMap;
@@ -9283,8 +9317,8 @@ function renderCrsMergedIssues() {
   // Filter records
   const filtered = CRS_MERGED_REPORTS.filter(r => {
     if (typeFilter && r.t !== typeFilter) return false;
-    if (descFilter && !matchesDescriptorFamily(r.d, descFilter)) return false;
-    if (hfacsFilter && r.h1 !== hfacsFilter) return false;
+    if (descFilter && !recordHasDescriptor(r, descFilter)) return false;
+    if (hfacsFilter && !recordHasHfacs(r, hfacsFilter)) return false;
     if (stationFilterSet && !stationFilterSet.has(r.c)) return false;
     if (regionFilter && r.r !== regionFilter) return false;
     if (dateFrom || dateTo) {
@@ -9546,6 +9580,26 @@ function _chartBarOpts(labels, onBarClick, filterVar) {
   };
 }
 
+// Show "No data" as an overlay without removing the canvas, so charts can recover on later renders
+function _setChartEmpty(canvas, message) {
+  if (!canvas || !canvas.parentElement) return;
+  const parent = canvas.parentElement;
+  let msgEl = parent.querySelector('.chart-empty-msg');
+  if (!message) {
+    if (msgEl) msgEl.remove();
+    canvas.style.visibility = '';
+    return;
+  }
+  if (!msgEl) {
+    msgEl = document.createElement('div');
+    msgEl.className = 'chart-empty-msg';
+    msgEl.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--color-text-muted);font-size:0.78rem;pointer-events:none;z-index:2';
+    parent.appendChild(msgEl);
+  }
+  msgEl.textContent = message;
+  canvas.style.visibility = 'hidden';
+}
+
 function _renderBarChart(canvasId, chartVar, counts, filterVar, onBarClick, maxBars) {
   maxBars = maxBars || 15;
   if (chartVar) { chartVar.destroy(); chartVar = null; }
@@ -9554,9 +9608,10 @@ function _renderBarChart(canvasId, chartVar, counts, filterVar, onBarClick, maxB
 
   const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, maxBars);
   if (sorted.length === 0) {
-    canvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--color-text-muted);font-size:0.78rem">No data</div>';
+    _setChartEmpty(canvas, 'No data');
     return null;
   }
+  _setChartEmpty(canvas, '');
 
   const labels = sorted.map(([l]) => l);
   const data = sorted.map(([, c]) => c);
@@ -9578,7 +9633,15 @@ function _renderBarChart(canvasId, chartVar, counts, filterVar, onBarClick, maxB
 function renderIssuesDescSetChart(records) {
   if (_issuesDescSetChart) { _issuesDescSetChart.destroy(); _issuesDescSetChart = null; }
   const counts = {};
-  records.forEach(r => { const d = r.d || ''; if (d) counts[d] = (counts[d] || 0) + 1; });
+  records.forEach(r => {
+    const seenDs = new Set();
+    _recordDsList(r).forEach(ds => {
+      if (ds.d && !seenDs.has(ds.d)) {
+        seenDs.add(ds.d);
+        counts[ds.d] = (counts[ds.d] || 0) + 1;
+      }
+    });
+  });
   _issuesDescSetChart = _renderBarChart(
     'dash-issues-descset-chart', _issuesDescSetChart, counts,
     _issuesDescSetFilter,
@@ -9589,6 +9652,9 @@ function renderIssuesDescSetChart(records) {
       renderIssuesDescSetChart(records);
       renderIssuesL1Chart(records);
       renderIssuesL2Chart(records);
+      renderIssuesOccurrences(records);
+      renderIssuesOccBadge();
+      renderIssuesActiveFilters();
     }
   );
 }
@@ -9596,15 +9662,18 @@ function renderIssuesDescSetChart(records) {
 function renderIssuesL1Chart(records) {
   if (_issuesL1Chart) { _issuesL1Chart.destroy(); _issuesL1Chart = null; }
   const ctx = document.getElementById('dash-issues-l1-context');
-  let source = records;
   if (_issuesDescSetFilter) {
-    source = records.filter(r => r.d === _issuesDescSetFilter);
     if (ctx) ctx.textContent = `\u2014 filtered by ${_issuesDescSetFilter}`;
   } else {
     if (ctx) ctx.textContent = '';
   }
   const counts = {};
-  source.forEach(r => { const l1 = r.l1 || ''; if (l1) counts[l1] = (counts[l1] || 0) + 1; });
+  records.forEach(r => {
+    const entry = _recordDsEntryFor(r, _issuesDescSetFilter, null);
+    if (!entry) return;
+    const l1 = entry.l1 || '';
+    if (l1) counts[l1] = (counts[l1] || 0) + 1;
+  });
   _issuesL1Chart = _renderBarChart(
     'dash-issues-l1-chart', _issuesL1Chart, counts,
     _issuesL1Filter,
@@ -9613,6 +9682,9 @@ function renderIssuesL1Chart(records) {
       _issuesL2Filter = null;
       renderIssuesL1Chart(records);
       renderIssuesL2Chart(records);
+      renderIssuesOccurrences(records);
+      renderIssuesOccBadge();
+      renderIssuesActiveFilters();
     }
   );
 }
@@ -9620,9 +9692,6 @@ function renderIssuesL1Chart(records) {
 function renderIssuesL2Chart(records) {
   if (_issuesL2Chart) { _issuesL2Chart.destroy(); _issuesL2Chart = null; }
   const ctx = document.getElementById('dash-issues-l2-context');
-  let source = records;
-  if (_issuesDescSetFilter) source = source.filter(r => r.d === _issuesDescSetFilter);
-  if (_issuesL1Filter) source = source.filter(r => r.l1 === _issuesL1Filter);
   if (_issuesDescSetFilter || _issuesL1Filter) {
     const parts = [];
     if (_issuesDescSetFilter) parts.push(_issuesDescSetFilter);
@@ -9632,13 +9701,21 @@ function renderIssuesL2Chart(records) {
     if (ctx) ctx.textContent = '';
   }
   const counts = {};
-  source.forEach(r => { const l2 = r.l2 || ''; if (l2) counts[l2] = (counts[l2] || 0) + 1; });
+  records.forEach(r => {
+    const entry = _recordDsEntryFor(r, _issuesDescSetFilter, _issuesL1Filter);
+    if (!entry) return;
+    const l2 = entry.l2 || '';
+    if (l2) counts[l2] = (counts[l2] || 0) + 1;
+  });
   _issuesL2Chart = _renderBarChart(
     'dash-issues-l2-chart', _issuesL2Chart, counts,
     _issuesL2Filter,
     (val) => {
       _issuesL2Filter = val;
       renderIssuesL2Chart(records);
+      renderIssuesOccurrences(records);
+      renderIssuesOccBadge();
+      renderIssuesActiveFilters();
     }
   );
 }
@@ -9651,13 +9728,15 @@ function renderIssuesHfacsChart(records) {
   const h1Counts = {};
   let total = 0;
   records.forEach(r => {
-    const h = r.h1 || '';
-    if (!h) return;
-    h1Counts[h] = (h1Counts[h] || 0) + 1;
-    total++;
+    const hs = new Set(_recordDsList(r).map(ds => ds.h1).filter(Boolean));
+    hs.forEach(h => {
+      h1Counts[h] = (h1Counts[h] || 0) + 1;
+      total++;
+    });
   });
 
-  if (total === 0) { canvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--color-text-muted);font-size:0.78rem">No HFACS data</div>'; return; }
+  if (total === 0) { _setChartEmpty(canvas, 'No HFACS data'); return; }
+  _setChartEmpty(canvas, '');
 
   const sorted = Object.entries(h1Counts).sort((a, b) => b[1] - a[1]).slice(0, 12);
   const labels = sorted.map(([h]) => h);
@@ -9769,6 +9848,9 @@ function renderIssuesOccurrences(records) {
   let display = records;
   if (_issuesOccTypeFilter) {
     display = records.filter(r => r.t === _issuesOccTypeFilter);
+  }
+  if (_issuesDescSetFilter || _issuesL1Filter || _issuesL2Filter) {
+    display = display.filter(r => recordMatchesHierarchy(r));
   }
 
   const occMap = {};
