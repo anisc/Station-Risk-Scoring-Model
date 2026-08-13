@@ -9340,7 +9340,7 @@ function updateIssuesHierarchyFilters(descFilter, l1Filter) {
   const curL1 = l1Sel.value;
   l1Sel.innerHTML = '<option value="">All Level 1</option>' +
     l1Opts.map(l => `<option value="${escHtml(l)}">${escHtml(l)}</option>`).join('');
-  if (curL1 && !l1Opts.includes(curL1)) l1Sel.value = '';
+  l1Sel.value = curL1 && l1Opts.includes(curL1) ? curL1 : '';
 
   const effL1 = l1Sel.value || (l1Filter && l1Opts.includes(l1Filter) ? l1Filter : '');
   const l2s2 = new Set();
@@ -9356,7 +9356,7 @@ function updateIssuesHierarchyFilters(descFilter, l1Filter) {
   const curL2 = l2Sel.value;
   l2Sel.innerHTML = '<option value="">All Level 2</option>' +
     l2Opts.map(l => `<option value="${escHtml(l)}">${escHtml(l)}</option>`).join('');
-  if (curL2 && !l2Opts.includes(curL2)) l2Sel.value = '';
+  l2Sel.value = curL2 && l2Opts.includes(curL2) ? curL2 : '';
 }
 
 function updateDashDescFilter(selectedType) {
