@@ -9092,7 +9092,15 @@ function init() {
     if (e.target.id === 'dash-issues-search') renderCrsMergedIssues();
   });
   document.getElementById('issues-view')?.addEventListener('change', e => {
-    if (e.target.id === 'dash-issues-type') updateDashDescFilter(e.target.value);
+    if (e.target.id === 'dash-issues-type') {
+      updateDashDescFilter(e.target.value);
+    }
+    if (e.target.id === 'dash-issues-descriptor') {
+      updateIssuesHierarchyFilters(e.target.value, document.getElementById('dash-issues-l1')?.value || '');
+    }
+    if (e.target.id === 'dash-issues-l1') {
+      updateIssuesHierarchyFilters(document.getElementById('dash-issues-descriptor')?.value || '', e.target.value);
+    }
     if (e.target.id?.startsWith('dash-issues-')) renderCrsMergedIssues();
   });
   document.getElementById('reporters-view')?.addEventListener('input', e => {
@@ -9234,8 +9242,6 @@ function initCrsMergedIssues() {
   // Populate filter dropdowns
   const types = new Set();
   const descriptors = new Set();
-  const level1s = new Set();
-  const level2s = new Set();
   const hfacs = new Set();
   const stations = new Set();
   const typeDescMap = {};
@@ -9243,8 +9249,6 @@ function initCrsMergedIssues() {
     if (r.t) types.add(r.t);
     _recordDsList(r).forEach(ds => {
       if (ds.d) { descriptors.add(ds.d); if (r.t) { if (!typeDescMap[r.t]) typeDescMap[r.t] = new Set(); typeDescMap[r.t].add(ds.d); } }
-      if (ds.l1) level1s.add(ds.l1);
-      if (ds.l2) level2s.add(ds.l2);
       if (ds.h1) hfacs.add(ds.h1);
     });
     if (r.c && r.c !== 'ENRTE') stations.add(r.c);
@@ -9253,8 +9257,6 @@ function initCrsMergedIssues() {
 
   const typeSel = document.getElementById('dash-issues-type');
   const descSel = document.getElementById('dash-issues-descriptor');
-  const l1Sel = document.getElementById('dash-issues-l1');
-  const l2Sel = document.getElementById('dash-issues-l2');
   const hfacsSel = document.getElementById('dash-issues-hfacs');
   const stationSel = document.getElementById('dash-issues-station');
 
@@ -9266,14 +9268,6 @@ function initCrsMergedIssues() {
     descSel.innerHTML = '<option value="">All Descriptors</option>' +
       [...descriptors].sort().map(d => `<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
   }
-  if (l1Sel) {
-    l1Sel.innerHTML = '<option value="">All Level 1</option>' +
-      [...level1s].sort().map(l1 => `<option value="${escHtml(l1)}">${escHtml(l1)}</option>`).join('');
-  }
-  if (l2Sel) {
-    l2Sel.innerHTML = '<option value="">All Level 2</option>' +
-      [...level2s].sort().map(l2 => `<option value="${escHtml(l2)}">${escHtml(l2)}</option>`).join('');
-  }
   if (hfacsSel) {
     hfacsSel.innerHTML = '<option value="">All HFACS L1</option>' +
       [...hfacs].sort().map(h => `<option value="${escHtml(h)}">${escHtml(h)}</option>`).join('');
@@ -9283,8 +9277,83 @@ function initCrsMergedIssues() {
       [...stations].sort().map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('');
   }
 
+  // Level 1 / Level 2 options are derived from the current filters (descriptor-aware)
+  updateIssuesHierarchyFilters('', '');
+
   // Event listeners are handled via delegated events on dashboard-view
   renderCrsMergedIssues();
+}
+
+function _getIssuesBaseFilteredRecords() {
+  if (typeof CRS_MERGED_REPORTS === 'undefined') return [];
+  const typeFilter = document.getElementById('dash-issues-type')?.value || '';
+  const descFilter = document.getElementById('dash-issues-descriptor')?.value || '';
+  const hfacsFilter = document.getElementById('dash-issues-hfacs')?.value || '';
+  const stationFilter = (document.getElementById('dash-issues-station')?.value || '').trim();
+  const dateFrom = document.getElementById('dash-issues-date-from')?.value || '';
+  const dateTo = document.getElementById('dash-issues-date-to')?.value || '';
+  const searchFilter = (document.getElementById('dash-issues-search')?.value || '').toLowerCase();
+  const airlineFilter = (document.getElementById('dash-filter-airline')?.value || '').trim();
+  const aircraftFilter = (document.getElementById('dash-filter-aircraft')?.value || '').trim();
+  const regionFilter = _issuesRegionFilter || '';
+
+  return CRS_MERGED_REPORTS.filter(r => {
+    if (typeFilter && r.t !== typeFilter) return false;
+    if (descFilter && !recordHasDescriptor(r, descFilter)) return false;
+    if (hfacsFilter && !recordHasHfacs(r, hfacsFilter)) return false;
+    if (stationFilter && r.c !== stationFilter) return false;
+    if (regionFilter && r.r !== regionFilter) return false;
+    if (dateFrom || dateTo) {
+      const dt = (r.dt || '').substring(0, 10);
+      if (!dt) return false;
+      if (dateFrom && dt < dateFrom) return false;
+      if (dateTo && dt > dateTo) return false;
+    }
+    if (airlineFilter && r.al !== airlineFilter) return false;
+    if (aircraftFilter && r.ac !== aircraftFilter) return false;
+    if (searchFilter) {
+      if (!recordMatchesQuery(r, searchFilter)) return false;
+    }
+    return true;
+  });
+}
+
+function updateIssuesHierarchyFilters(descFilter, l1Filter) {
+  const l1Sel = document.getElementById('dash-issues-l1');
+  const l2Sel = document.getElementById('dash-issues-l2');
+  if (!l1Sel || !l2Sel) return;
+
+  const base = _getIssuesBaseFilteredRecords();
+
+  const l1s = new Set();
+  const l2s = new Set();
+  base.forEach(r => {
+    _recordDsList(r).forEach(ds => {
+      if (ds.l1) l1s.add(ds.l1);
+      if (ds.l2) l2s.add(ds.l2);
+    });
+  });
+
+  const l1Opts = [...l1s].sort();
+  const curL1 = l1Sel.value;
+  l1Sel.innerHTML = '<option value="">All Level 1</option>' +
+    l1Opts.map(l => `<option value="${escHtml(l)}">${escHtml(l)}</option>`).join('');
+  if (curL1 && !l1Opts.includes(curL1)) l1Sel.value = '';
+
+  const effL1 = l1Sel.value || (l1Filter && l1Opts.includes(l1Filter) ? l1Filter : '');
+  const l2s2 = new Set();
+  if (effL1) {
+    base.forEach(r => {
+      _recordDsList(r).forEach(ds => {
+        if (ds.l1 === effL1 && ds.l2) l2s2.add(ds.l2);
+      });
+    });
+  }
+  const l2Opts = effL1 ? [...l2s2].sort() : [...l2s].sort();
+  const curL2 = l2Sel.value;
+  l2Sel.innerHTML = '<option value="">All Level 2</option>' +
+    l2Opts.map(l => `<option value="${escHtml(l)}">${escHtml(l)}</option>`).join('');
+  if (curL2 && !l2Opts.includes(curL2)) l2Sel.value = '';
 }
 
 function updateDashDescFilter(selectedType) {
@@ -9303,6 +9372,7 @@ function updateDashDescFilter(selectedType) {
   descSel.innerHTML = '<option value="">All Descriptors</option>' +
     descriptors.map(d => `<option value="${escHtml(d)}"${d === currentVal ? ' selected' : ''}>${escHtml(d)}</option>`).join('');
   if (currentVal && !descriptors.includes(currentVal)) descSel.value = '';
+  updateIssuesHierarchyFilters(descSel.value, document.getElementById('dash-issues-l1')?.value || '');
 }
 
 function renderCrsMergedIssues() {
