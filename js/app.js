@@ -9324,11 +9324,13 @@ function updateIssuesHierarchyFilters(descFilter, l1Filter) {
   if (!l1Sel || !l2Sel) return;
 
   const base = _getIssuesBaseFilteredRecords();
+  const effDesc = document.getElementById('dash-issues-descriptor')?.value || '';
 
   const l1s = new Set();
   const l2s = new Set();
   base.forEach(r => {
     _recordDsList(r).forEach(ds => {
+      if (effDesc && ds.d !== effDesc) return;
       if (ds.l1) l1s.add(ds.l1);
       if (ds.l2) l2s.add(ds.l2);
     });
@@ -9345,6 +9347,7 @@ function updateIssuesHierarchyFilters(descFilter, l1Filter) {
   if (effL1) {
     base.forEach(r => {
       _recordDsList(r).forEach(ds => {
+        if (effDesc && ds.d !== effDesc) return;
         if (ds.l1 === effL1 && ds.l2) l2s2.add(ds.l2);
       });
     });
