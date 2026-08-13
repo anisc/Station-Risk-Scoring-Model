@@ -2139,7 +2139,7 @@ tr:hover td { filter: brightness(0.97); }
 
 .dash-issues-occ-row {
   display: grid;
-  grid-template-columns: 110px 60px 70px 100px 1fr;
+  grid-template-columns: 90px 105px 55px 70px 95px 1fr;
   gap: 0.5rem;
   align-items: center;
   padding: 0.4rem 0.75rem;
@@ -2151,6 +2151,11 @@ tr:hover td { filter: brightness(0.97); }
 .dash-issues-occ-row:last-child { border-bottom: none; }
 .dash-issues-occ-row:hover { background: var(--color-bg-hover); }
 
+.dash-issues-occ-date {
+  color: var(--color-text);
+  font-weight: 600;
+  white-space: nowrap;
+}
 .dash-issues-occ-no {
   font-weight: 600;
   color: var(--color-text);
@@ -2189,7 +2194,7 @@ tr:hover td { filter: brightness(0.97); }
 }
 
 @media (max-width: 768px) {
-  .dash-issues-occ-row { grid-template-columns: 90px 45px 55px 80px 1fr; font-size: 0.7rem; }
+  .dash-issues-occ-row { grid-template-columns: 80px 90px 45px 55px 75px 1fr; font-size: 0.7rem; }
 }
 
 @media (max-width: 1100px) {

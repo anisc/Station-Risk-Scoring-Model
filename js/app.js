@@ -9956,16 +9956,20 @@ function renderIssuesOccurrences(records) {
   display.forEach(r => {
     const key = r.o;
     if (!occMap[key]) {
-      occMap[key] = { o: key, c: r.c, r: r.r, rd: r.rd, types: {}, count: 0, rc: r.rc || 0 };
+      occMap[key] = { o: key, c: r.c, r: r.r, rd: r.rd, types: {}, count: 0, rc: r.rc || 0, dt: '' };
     }
     occMap[key].types[r.t || 'Unknown'] = (occMap[key].types[r.t || 'Unknown'] || 0) + 1;
     occMap[key].count++;
     if (r.rc && r.rc > occMap[key].rc) occMap[key].rc = r.rc;
     if (r.rd && (!occMap[key].rd || r.rd.length > occMap[key].rd.length)) occMap[key].rd = r.rd;
     if (r.c) occMap[key].c = r.c;
+    if (r.dt) {
+      const d = String(r.dt).substring(0, 10);
+      if (d && d > occMap[key].dt) occMap[key].dt = d;
+    }
   });
 
-  const grouped = Object.values(occMap).sort((a, b) => b.count - a.count);
+  const grouped = Object.values(occMap).sort((a, b) => (b.dt || '').localeCompare(a.dt || ''));
 
   const countEl = document.getElementById('dash-issues-occ-count');
   if (countEl) countEl.textContent = `${grouped.length.toLocaleString()} unique occurrences · ${display.length.toLocaleString()} records`;
@@ -9980,6 +9984,7 @@ function renderIssuesOccurrences(records) {
     const col = _issuesOccTypeColors[topType[0]] || '#94A3B8';
     const typeBadge = `<span class="dash-issues-occ-type" style="background:${col}22;color:${col}">${escHtml(topType[0])}</span>`;
     return `<div class="dash-issues-occ-row" data-occ="${escHtml(g.o)}">
+      <span class="dash-issues-occ-date">${escHtml(g.dt || '—')}</span>
       <span class="dash-issues-occ-no">${escHtml(g.o)}</span>
       <span class="dash-issues-occ-reports">${g.rc || g.count}</span>
       <span class="dash-issues-occ-type-cell">${typeBadge}</span>
