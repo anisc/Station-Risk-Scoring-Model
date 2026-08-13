@@ -9205,6 +9205,14 @@ function recordHasHfacs(r, h) {
   if (!h) return false;
   return _recordDsList(r).some(ds => ds.h1 === h);
 }
+function recordHasLevel1(r, l1) {
+  if (!l1) return false;
+  return _recordDsList(r).some(ds => ds.l1 === l1);
+}
+function recordHasLevel2(r, l2) {
+  if (!l2) return false;
+  return _recordDsList(r).some(ds => ds.l2 === l2);
+}
 function recordMatchesHierarchy(r) {
   const list = _recordDsList(r);
   if (list.length === 0) return !(_issuesDescSetFilter || _issuesL1Filter || _issuesL2Filter);
@@ -9226,6 +9234,8 @@ function initCrsMergedIssues() {
   // Populate filter dropdowns
   const types = new Set();
   const descriptors = new Set();
+  const level1s = new Set();
+  const level2s = new Set();
   const hfacs = new Set();
   const stations = new Set();
   const typeDescMap = {};
@@ -9233,6 +9243,8 @@ function initCrsMergedIssues() {
     if (r.t) types.add(r.t);
     _recordDsList(r).forEach(ds => {
       if (ds.d) { descriptors.add(ds.d); if (r.t) { if (!typeDescMap[r.t]) typeDescMap[r.t] = new Set(); typeDescMap[r.t].add(ds.d); } }
+      if (ds.l1) level1s.add(ds.l1);
+      if (ds.l2) level2s.add(ds.l2);
       if (ds.h1) hfacs.add(ds.h1);
     });
     if (r.c && r.c !== 'ENRTE') stations.add(r.c);
@@ -9241,6 +9253,8 @@ function initCrsMergedIssues() {
 
   const typeSel = document.getElementById('dash-issues-type');
   const descSel = document.getElementById('dash-issues-descriptor');
+  const l1Sel = document.getElementById('dash-issues-l1');
+  const l2Sel = document.getElementById('dash-issues-l2');
   const hfacsSel = document.getElementById('dash-issues-hfacs');
   const stationSel = document.getElementById('dash-issues-station');
 
@@ -9251,6 +9265,14 @@ function initCrsMergedIssues() {
   if (descSel) {
     descSel.innerHTML = '<option value="">All Descriptors</option>' +
       [...descriptors].sort().map(d => `<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
+  }
+  if (l1Sel) {
+    l1Sel.innerHTML = '<option value="">All Level 1</option>' +
+      [...level1s].sort().map(l1 => `<option value="${escHtml(l1)}">${escHtml(l1)}</option>`).join('');
+  }
+  if (l2Sel) {
+    l2Sel.innerHTML = '<option value="">All Level 2</option>' +
+      [...level2s].sort().map(l2 => `<option value="${escHtml(l2)}">${escHtml(l2)}</option>`).join('');
   }
   if (hfacsSel) {
     hfacsSel.innerHTML = '<option value="">All HFACS L1</option>' +
@@ -9288,6 +9310,8 @@ function renderCrsMergedIssues() {
 
   const typeFilter = document.getElementById('dash-issues-type')?.value || '';
   const descFilter = document.getElementById('dash-issues-descriptor')?.value || '';
+  const l1Filter = document.getElementById('dash-issues-l1')?.value || '';
+  const l2Filter = document.getElementById('dash-issues-l2')?.value || '';
   const hfacsFilter = document.getElementById('dash-issues-hfacs')?.value || '';
   const stationFilter = (document.getElementById('dash-issues-station')?.value || '').trim();
   const dateFrom = document.getElementById('dash-issues-date-from')?.value || '';
@@ -9318,6 +9342,8 @@ function renderCrsMergedIssues() {
   const filtered = CRS_MERGED_REPORTS.filter(r => {
     if (typeFilter && r.t !== typeFilter) return false;
     if (descFilter && !recordHasDescriptor(r, descFilter)) return false;
+    if (l1Filter && !recordHasLevel1(r, l1Filter)) return false;
+    if (l2Filter && !recordHasLevel2(r, l2Filter)) return false;
     if (hfacsFilter && !recordHasHfacs(r, hfacsFilter)) return false;
     if (stationFilterSet && !stationFilterSet.has(r.c)) return false;
     if (regionFilter && r.r !== regionFilter) return false;
