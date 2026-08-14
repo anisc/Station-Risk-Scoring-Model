@@ -9177,6 +9177,7 @@ let _issuesL2Chart = null;
 let _issuesHfacsChart = null;
 let _issuesTrendChart = null;
 let _issuesRateChart = null;
+const _ISSUES_TREND_PALETTE = ['#3B82F6', '#F97316', '#10B981', '#8B5CF6', '#EF4444', '#F59E0B', '#06B6D4', '#EC4899', '#84CC16', '#6366F1'];
 let _issuesOccTypeFilter = null;
 let _issuesRegionFilter = null;
 let _issuesDescSetFilter = null;
@@ -9279,6 +9280,10 @@ function initCrsMergedIssues() {
     stationSel.innerHTML = '<option value="">All Stations</option>' +
       [...stations].sort().map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('');
   }
+  const compareSel = document.getElementById('dash-issues-compare-types');
+  if (compareSel) {
+    compareSel.innerHTML = [...types].sort().map(t => `<option value="${escHtml(t)}">${escHtml(t)}</option>`).join('');
+  }
 
   // Level 1 / Level 2 options are derived from the current filters (descriptor-aware)
   updateIssuesHierarchyFilters('', '');
@@ -9287,7 +9292,7 @@ function initCrsMergedIssues() {
   renderCrsMergedIssues();
 }
 
-function _getIssuesBaseFilteredRecords() {
+function _getIssuesBaseFilteredRecords(skipType) {
   if (typeof CRS_MERGED_REPORTS === 'undefined') return [];
   const typeFilter = document.getElementById('dash-issues-type')?.value || '';
   const descFilter = document.getElementById('dash-issues-descriptor')?.value || '';
@@ -9301,7 +9306,7 @@ function _getIssuesBaseFilteredRecords() {
   const regionFilter = _issuesRegionFilter || '';
 
   return CRS_MERGED_REPORTS.filter(r => {
-    if (typeFilter && r.t !== typeFilter) return false;
+    if (!skipType && typeFilter && r.t !== typeFilter) return false;
     if (descFilter && !recordHasDescriptor(r, descFilter)) return false;
     if (hfacsFilter && !recordHasHfacs(r, hfacsFilter)) return false;
     if (stationFilter && r.c !== stationFilter) return false;
@@ -9922,20 +9927,49 @@ function renderIssuesTrendCharts(records) {
     return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-US', { month: 'short', year: '2-digit', timeZone: 'UTC' });
   });
 
-  const occSets = {};
-  months.forEach(k => { occSets[k] = new Set(); });
-  records.forEach(r => {
-    const k = String(r.dt || '').substring(0, 7);
-    if (occSets[k] && r.o) occSets[k].add(r.o);
-  });
+  const compareSel = document.getElementById('dash-issues-compare-types');
+  const compareTypes = compareSel ? Array.from(compareSel.selectedOptions).map(o => o.value).filter(Boolean) : [];
+  const stationSel = document.getElementById('dash-issues-station');
+  const selStation = (stationSel && stationSel.value) ? stationSel.value : '';
+  const stationScope = selStation ? `station ${selStation}` : '';
 
+  // Build series: each series has label + per-month occurrence set
+  const series = [];
+  let flights = null;
+
+  if (compareTypes.length) {
+    // Overlay mode: one line per selected type, ignoring the single type filter
+    const base = _getIssuesBaseFilteredRecords(true);
+    compareTypes.forEach(t => {
+      const occSets = {};
+      months.forEach(k => { occSets[k] = new Set(); });
+      base.forEach(r => {
+        if (r.t !== t) return;
+        const k = String(r.dt || '').substring(0, 7);
+        if (occSets[k] && r.o) occSets[k].add(r.o);
+      });
+      series.push({ label: t, occSets });
+    });
+  } else {
+    const occSets = {};
+    months.forEach(k => { occSets[k] = new Set(); });
+    records.forEach(r => {
+      const k = String(r.dt || '').substring(0, 7);
+      if (occSets[k] && r.o) occSets[k].add(r.o);
+    });
+    series.push({ label: '', occSets });
+  }
+
+  // Shared flight denominator: flights for all stations in the current scope
+  // (respects station/region/date/descriptor filters; type-independent so rates are comparable)
+  const scopeSource = compareTypes.length ? _getIssuesBaseFilteredRecords(true) : records;
   const stations = new Set();
-  records.forEach(r => {
+  scopeSource.forEach(r => {
     const iata = (ICAO_TO_IATA_GLOBAL && ICAO_TO_IATA_GLOBAL[r.c]) || r.c;
     if (iata && typeof FLIGHT_COUNTS !== 'undefined' && FLIGHT_COUNTS && FLIGHT_COUNTS[iata]) stations.add(iata);
   });
 
-  const flights = {};
+  flights = {};
   months.forEach(k => { flights[k] = 0; });
   stations.forEach(iata => {
     const daily = FLIGHT_COUNTS[iata].daily;
@@ -9946,12 +9980,35 @@ function renderIssuesTrendCharts(records) {
     });
   });
 
-  const occData = months.map(k => occSets[k].size);
-  const rateData = months.map((k, i) => flights[k] > 0 ? Math.round((occData[i] / flights[k]) * 1000 * 100) / 100 : null);
+  const occDatasets = series.map((s, i) => ({
+    label: s.label || 'Occurrences',
+    data: months.map(k => s.occSets[k].size),
+    borderColor: _ISSUES_TREND_PALETTE[i % _ISSUES_TREND_PALETTE.length],
+    backgroundColor: _ISSUES_TREND_PALETTE[i % _ISSUES_TREND_PALETTE.length] + '26',
+    borderWidth: 2,
+    pointRadius: 3,
+    pointHoverRadius: 5,
+    fill: true,
+    tension: 0.35,
+  }));
 
-  const stationSel = document.getElementById('dash-issues-station');
-  const selStation = (stationSel && stationSel.value) ? stationSel.value : '';
-  const scope = selStation ? `station ${selStation}` : `${stations.size.toLocaleString()} stations`;
+  const rateDatasets = series.map((s, i) => ({
+    label: s.label || 'Rate / 1,000',
+    data: months.map((k, idx) => flights[k] > 0 ? Math.round((s.occSets[k].size / flights[k]) * 1000 * 100) / 100 : null),
+    borderColor: _ISSUES_TREND_PALETTE[i % _ISSUES_TREND_PALETTE.length],
+    backgroundColor: _ISSUES_TREND_PALETTE[i % _ISSUES_TREND_PALETTE.length] + '26',
+    borderWidth: 2,
+    pointRadius: 3,
+    pointHoverRadius: 5,
+    fill: true,
+    tension: 0.35,
+    spanGaps: true,
+  }));
+
+  const scopeParts = [];
+  if (compareTypes.length) scopeParts.push(`comparing ${compareTypes.join(', ')}`);
+  scopeParts.push(stationScope || `${stations.size.toLocaleString()} stations`);
+  const scope = scopeParts.join(' \u00b7 ');
   const trendCtx = document.getElementById('dash-issues-trend-context');
   if (trendCtx) trendCtx.textContent = `\u2014 last ${months.length} months \u00b7 ${scope}`;
   const rateCtx = document.getElementById('dash-issues-rate-context');
@@ -9962,30 +10019,17 @@ function renderIssuesTrendCharts(records) {
 
   _issuesTrendChart = new Chart(canvas1.getContext('2d'), {
     type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Occurrences',
-        data: occData,
-        borderColor: '#3B82F6',
-        backgroundColor: 'rgba(59,130,246,0.15)',
-        borderWidth: 2,
-        pointRadius: 3,
-        pointHoverRadius: 5,
-        fill: true,
-        tension: 0.35,
-      }],
-    },
+    data: { labels, datasets: occDatasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: { display: compareTypes.length > 1, position: 'top', labels: { boxWidth: 14, boxHeight: 2, font: { size: 9 } } },
         tooltip: {
           callbacks: {
             label(ctx) {
               const k = months[ctx.dataIndex];
-              return `${occData[ctx.dataIndex]} occurrences \u00b7 ${(flights[k] || 0).toLocaleString()} flights`;
+              return `${ctx.dataset.label || 'Occurrences'}: ${ctx.parsed.y} occurrences \u00b7 ${(flights[k] || 0).toLocaleString()} flights`;
             },
           },
         },
@@ -9999,33 +10043,19 @@ function renderIssuesTrendCharts(records) {
 
   _issuesRateChart = new Chart(canvas2.getContext('2d'), {
     type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Rate / 1,000',
-        data: rateData,
-        borderColor: '#F97316',
-        backgroundColor: 'rgba(249,115,22,0.15)',
-        borderWidth: 2,
-        pointRadius: 3,
-        pointHoverRadius: 5,
-        fill: true,
-        tension: 0.35,
-        spanGaps: true,
-      }],
-    },
+    data: { labels, datasets: rateDatasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: { display: compareTypes.length > 1, position: 'top', labels: { boxWidth: 14, boxHeight: 2, font: { size: 9 } } },
         tooltip: {
           callbacks: {
             label(ctx) {
-              const v = rateData[ctx.dataIndex];
+              const v = ctx.parsed.y;
               const k = months[ctx.dataIndex];
-              if (v === null) return 'No flights in this month';
-              return `${v} per 1,000 flights \u00b7 ${occData[ctx.dataIndex]} occurrences / ${(flights[k] || 0).toLocaleString()} flights`;
+              if (v === null) return `${ctx.dataset.label || 'Rate / 1,000'}: No flights in this month`;
+              return `${ctx.dataset.label || 'Rate / 1,000'}: ${v} per 1,000 flights \u00b7 ${(flights[k] || 0).toLocaleString()} flights`;
             },
           },
         },

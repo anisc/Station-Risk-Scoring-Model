@@ -1122,6 +1122,16 @@
             </div>
           </div>
         </div>
+        <div class="dash-issues-compare-row" style="display:flex;align-items:flex-start;gap:0.6rem;flex-wrap:wrap;margin:0.5rem 0 0.25rem;padding:0.6rem 0.75rem;border:1px dashed rgba(0,0,0,0.12);border-radius:0.5rem">
+          <div style="display:flex;flex-direction:column;gap:0.2rem">
+            <label for="dash-issues-compare-types" style="font-size:0.75rem;font-weight:600;color:var(--color-text)">Overlay types on trend charts</label>
+            <select id="dash-issues-compare-types" multiple size="5" aria-label="Overlay types on trend charts" style="font-size:0.72rem;min-width:210px;max-width:280px">
+            </select>
+          </div>
+          <p style="font-size:0.7rem;color:var(--color-text-muted);margin:1.5rem 0 0;max-width:340px">
+            Cmd/Ctrl+click to select 2+ types (e.g. OAPT + SAPT) and superpose their monthly occurrence and rate lines. Cleared = single line from current filters.
+          </p>
+        </div>
         <div class="dash-grid-2" style="margin-top:0.75rem">
           <div class="dash-panel" style="box-shadow:none;padding:0.75rem">
             <h4 style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;color:var(--color-text)">Monthly Occurrences <span id="dash-issues-trend-context" style="font-weight:400;color:var(--color-text-muted)"></span></h4>
