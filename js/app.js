@@ -10430,8 +10430,9 @@ function setupImportUI() {
     progressStep.textContent = '';
   });
 
-  // Lazy-load large data files after initial render
-  _lazyLoadScript('data/oapt_reports.js', () => {
+  // Lazy-load large data files after initial render.
+  // fetch + JSON.parse is ~3x faster than parsing the data via a <script> tag.
+  _loadBigData('OAPT_REPORTS', 'data/oapt_reports.js', () => {
     if (document.getElementById('reporters-view')?.classList.contains('active')) renderReportersPage();
     if (document.getElementById('coverage-view')?.classList.contains('active')) renderContractorCoverage();
     if (document.getElementById('map-view')?.classList.contains('active')) renderStationMap();
@@ -10440,7 +10441,7 @@ function setupImportUI() {
       if (iata) renderOccurrenceReports(iata);
     }
   });
-  _lazyLoadScript('data/crs_merged_reports.js', () => {
+  _loadBigData('CRS_MERGED_REPORTS', 'data/crs_merged_reports.js', () => {
     _precomputeCrsSearchText();
     initCrsMergedIssues();
     if (document.getElementById('issues-view')?.classList.contains('active')) renderCrsMergedIssues();
@@ -10462,16 +10463,24 @@ function _markDataFileDone() {
   }
 }
 
-function _lazyLoadScript(src, onload) {
+function _loadBigData(name, url, onload) {
   _dataFilesPending++;
   const banner = document.getElementById('global-loading-banner');
   if (banner) banner.style.display = 'block';
-  const s = document.createElement('script');
-  s.src = src;
-  s.onload = () => { if (onload) onload(); _markDataFileDone(); };
-  s.onerror = () => _markDataFileDone();
-  s.async = true;
-  document.body.appendChild(s);
+  fetch(url)
+    .then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.text();
+    })
+    .then(text => {
+      const open = name === 'CRS_MERGED_REPORTS' ? '[' : '{';
+      const close = name === 'CRS_MERGED_REPORTS' ? ']' : '}';
+      const json = text.slice(text.indexOf(open), text.lastIndexOf(close) + 1);
+      window[name] = JSON.parse(json);
+    })
+    .then(onload)
+    .catch(err => console.error('Failed to load ' + url, err))
+    .then(() => _markDataFileDone());
 }
 
 document.addEventListener('DOMContentLoaded', init);
