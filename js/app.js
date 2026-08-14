@@ -9949,8 +9949,11 @@ function renderIssuesTrendCharts(records) {
   const occData = months.map(k => occSets[k].size);
   const rateData = months.map((k, i) => flights[k] > 0 ? Math.round((occData[i] / flights[k]) * 1000 * 100) / 100 : null);
 
+  const stationSel = document.getElementById('dash-issues-station');
+  const selStation = (stationSel && stationSel.value) ? stationSel.value : '';
+  const scope = selStation ? `station ${selStation}` : `${stations.size.toLocaleString()} stations`;
   const trendCtx = document.getElementById('dash-issues-trend-context');
-  if (trendCtx) trendCtx.textContent = `\u2014 last ${months.length} months \u00b7 ${stations.size.toLocaleString()} stations`;
+  if (trendCtx) trendCtx.textContent = `\u2014 last ${months.length} months \u00b7 ${scope}`;
   const rateCtx = document.getElementById('dash-issues-rate-context');
   if (rateCtx) rateCtx.textContent = `\u2014 occurrences \u00f7 flights \u00d7 1,000`;
 
