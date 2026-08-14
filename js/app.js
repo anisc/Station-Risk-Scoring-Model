@@ -9251,6 +9251,7 @@ function _recordRl(r) {
 function initCrsMergedIssues() {
   if (typeof CRS_MERGED_REPORTS === 'undefined' || !CRS_MERGED_REPORTS.length) return;
   _issuesMonthWindowCache = null;
+  _issuesMonthWindowCacheKey = '';
 
   // Populate filter dropdowns
   const types = new Set();
@@ -9890,8 +9891,12 @@ function renderIssuesHfacsChart(records) {
 }
 
 let _issuesMonthWindowCache = null;
+let _issuesMonthWindowCacheKey = '';
 function _issuesMonthWindow() {
-  if (_issuesMonthWindowCache) return _issuesMonthWindowCache;
+  const df = document.getElementById('dash-issues-date-from')?.value || '';
+  const dt = document.getElementById('dash-issues-date-to')?.value || '';
+  const cacheKey = `${df}|${dt}`;
+  if (_issuesMonthWindowCache && _issuesMonthWindowCacheKey === cacheKey) return _issuesMonthWindowCache;
   let maxKey = '';
   const check = d => {
     if (!d) return;
@@ -9902,16 +9907,40 @@ function _issuesMonthWindow() {
   if (typeof FLIGHT_COUNTS !== 'undefined' && FLIGHT_COUNTS) {
     Object.values(FLIGHT_COUNTS).forEach(fc => { check(fc.from); check(fc.to); });
   }
-  if (!maxKey) { _issuesMonthWindowCache = []; return _issuesMonthWindowCache; }
+  if (!maxKey) { _issuesMonthWindowCache = []; _issuesMonthWindowCacheKey = cacheKey; return _issuesMonthWindowCache; }
+
+  let startKey = '';
+  let endKey = maxKey;
   const [y, m] = maxKey.split('-').map(Number);
   let curY = y, curM = m;
-  const keys = [];
+  const last13 = [];
   for (let i = 0; i < 13; i++) {
-    keys.unshift(`${curY}-${String(curM).padStart(2, '0')}`);
+    last13.unshift(`${curY}-${String(curM).padStart(2, '0')}`);
     curM--;
     if (curM === 0) { curM = 12; curY--; }
   }
+  startKey = last13[0];
+
+  if (df) {
+    const f = df.substring(0, 7);
+    if (f > startKey) startKey = f;
+    if (f > endKey) endKey = f;
+  }
+  if (dt) {
+    const t = dt.substring(0, 7);
+    if (t < endKey) endKey = t;
+  }
+
+  const keys = [];
+  let Y = Number(startKey.substring(0, 4)), M = Number(startKey.substring(5, 7));
+  const ey = Number(endKey.substring(0, 4)), em = Number(endKey.substring(5, 7));
+  while (Y < ey || (Y === ey && M <= em)) {
+    keys.push(`${Y}-${String(M).padStart(2, '0')}`);
+    M++;
+    if (M === 13) { M = 1; Y++; }
+  }
   _issuesMonthWindowCache = keys;
+  _issuesMonthWindowCacheKey = cacheKey;
   return keys;
 }
 
@@ -10018,8 +10047,10 @@ function renderIssuesTrendCharts(records) {
   if (compareTypes.length) scopeParts.push(`comparing ${compareTypes.join(', ')}`);
   scopeParts.push(stationScope || `${stations.size.toLocaleString()} stations`);
   const scope = scopeParts.join(' \u00b7 ');
+  const hasDateFilter = !!(document.getElementById('dash-issues-date-from')?.value || document.getElementById('dash-issues-date-to')?.value);
+  const windowLabel = hasDateFilter ? `${months.length} months` : `last ${months.length} months`;
   const trendCtx = document.getElementById('dash-issues-trend-context');
-  if (trendCtx) trendCtx.textContent = `\u2014 last ${months.length} months \u00b7 ${scope}`;
+  if (trendCtx) trendCtx.textContent = `\u2014 ${windowLabel} \u00b7 ${scope}`;
   const rateCtx = document.getElementById('dash-issues-rate-context');
   if (rateCtx) rateCtx.textContent = `\u2014 occurrences \u00f7 flights \u00d7 1,000`;
 
