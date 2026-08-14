@@ -9153,6 +9153,13 @@ function init() {
       renderIssuesOccBadge();
       return;
     }
+    const pageBtn = e.target.closest('.dash-issues-occ-page-btn');
+    if (pageBtn && !pageBtn.disabled) {
+      e.preventDefault();
+      _issuesOccPage = parseInt(pageBtn.dataset.page, 10) || 1;
+      renderIssuesOccurrences(_issuesFilteredRecords, { keepPage: true });
+      return;
+    }
     const occRow = e.target.closest('.dash-issues-occ-row');
     if (occRow && occRow.dataset.occ) {
       // Could link to detail in the future
@@ -9177,6 +9184,8 @@ let _issuesL2Chart = null;
 let _issuesHfacsChart = null;
 let _issuesTrendChart = null;
 let _issuesRateChart = null;
+let _issuesOccPage = 1;
+const _issuesOccPageSize = 100;
 const _ISSUES_TREND_PALETTE = ['#3B82F6', '#F97316', '#10B981', '#8B5CF6', '#EF4444', '#F59E0B', '#06B6D4', '#EC4899', '#84CC16', '#6366F1'];
 let _issuesOccTypeFilter = null;
 let _issuesRegionFilter = null;
@@ -10137,9 +10146,10 @@ function renderIssuesOccBadge() {
   }
 }
 
-function renderIssuesOccurrences(records) {
+function renderIssuesOccurrences(records, opts) {
   const container = document.getElementById('dash-issues-occ-list');
   if (!container) return;
+  if (!opts || !opts.keepPage) _issuesOccPage = 1;
 
   let display = records;
   if (_issuesOccTypeFilter) {
@@ -10176,7 +10186,19 @@ function renderIssuesOccurrences(records) {
     return;
   }
 
-  const rows = grouped.map(g => {
+  const totalPages = Math.max(1, Math.ceil(grouped.length / _issuesOccPageSize));
+  if (_issuesOccPage > totalPages) _issuesOccPage = totalPages;
+  const pageRecords = grouped.slice((_issuesOccPage - 1) * _issuesOccPageSize, _issuesOccPage * _issuesOccPageSize);
+
+  const pager = `<div class="dash-issues-occ-pager" style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;flex-wrap:wrap;padding:0.4rem 0">
+    <span style="font-size:0.72rem;color:var(--color-text-muted)">Page ${_issuesOccPage.toLocaleString()} of ${totalPages.toLocaleString()}</span>
+    <span style="display:flex;gap:0.35rem">
+      <button class="dash-issues-occ-page-btn" type="button" data-page="${_issuesOccPage - 1}" ${_issuesOccPage <= 1 ? 'disabled' : ''} style="font-size:0.72rem;padding:0.25rem 0.6rem;border:1px solid var(--color-border, rgba(0,0,0,0.15));border-radius:0.35rem;background:var(--color-bg-card, #fff);color:var(--color-text);cursor:pointer">\u2039 Prev</button>
+      <button class="dash-issues-occ-page-btn" type="button" data-page="${_issuesOccPage + 1}" ${_issuesOccPage >= totalPages ? 'disabled' : ''} style="font-size:0.72rem;padding:0.25rem 0.6rem;border:1px solid var(--color-border, rgba(0,0,0,0.15));border-radius:0.35rem;background:var(--color-bg-card, #fff);color:var(--color-text);cursor:pointer">Next \u203a</button>
+    </span>
+  </div>`;
+
+  const rows = pageRecords.map(g => {
     const topType = Object.entries(g.types).sort((a, b) => b[1] - a[1])[0];
     const col = _issuesOccTypeColors[topType[0]] || '#94A3B8';
     const typeBadge = `<span class="dash-issues-occ-type" style="background:${col}22;color:${col}">${escHtml(topType[0])}</span>`;
@@ -10190,7 +10212,7 @@ function renderIssuesOccurrences(records) {
     </div>`;
   }).join('');
 
-  container.innerHTML = rows;
+  container.innerHTML = pager + rows;
 }
 
 const _issuesOccTypeColors = {
@@ -10391,10 +10413,23 @@ function setupImportUI() {
   });
 }
 
+let _dataFilesPending = 0;
+function _markDataFileDone() {
+  _dataFilesPending--;
+  if (_dataFilesPending <= 0) {
+    const b = document.getElementById('global-loading-banner');
+    if (b) b.style.display = 'none';
+  }
+}
+
 function _lazyLoadScript(src, onload) {
+  _dataFilesPending++;
+  const banner = document.getElementById('global-loading-banner');
+  if (banner) banner.style.display = 'block';
   const s = document.createElement('script');
   s.src = src;
-  s.onload = onload;
+  s.onload = () => { if (onload) onload(); _markDataFileDone(); };
+  s.onerror = () => _markDataFileDone();
   s.async = true;
   document.body.appendChild(s);
 }
