@@ -9770,6 +9770,7 @@ function renderIssuesDescSetChart(records) {
       renderIssuesDescSetChart(records);
       renderIssuesL1Chart(records);
       renderIssuesL2Chart(records);
+      renderIssuesTrendCharts(records);
       renderIssuesOccurrences(records);
       renderIssuesOccBadge();
       renderIssuesActiveFilters();
@@ -9800,6 +9801,7 @@ function renderIssuesL1Chart(records) {
       _issuesL2Filter = null;
       renderIssuesL1Chart(records);
       renderIssuesL2Chart(records);
+      renderIssuesTrendCharts(records);
       renderIssuesOccurrences(records);
       renderIssuesOccBadge();
       renderIssuesActiveFilters();
@@ -9831,6 +9833,7 @@ function renderIssuesL2Chart(records) {
     (val) => {
       _issuesL2Filter = val;
       renderIssuesL2Chart(records);
+      renderIssuesTrendCharts(records);
       renderIssuesOccurrences(records);
       renderIssuesOccBadge();
       renderIssuesActiveFilters();
@@ -9971,17 +9974,18 @@ function renderIssuesTrendCharts(records) {
   const selStation = (stationSel && stationSel.value) ? stationSel.value : '';
   const stationScope = selStation ? `station ${selStation}` : '';
 
-  // Build series: each series has label + per-month occurrence set
+  // Build series: each series has label + per-month occurrence set.
+  // Apply bar-chart drill-down filters (descriptor/L1/L2) so the line charts follow them.
   const series = [];
   let flights = null;
+  const baseSource = compareTypes.length ? _getIssuesBaseFilteredRecords(true) : records;
+  const hierSource = baseSource.filter(r => recordMatchesHierarchy(r));
 
   if (compareTypes.length) {
-    // Overlay mode: one line per selected type, ignoring the single type filter
-    const base = _getIssuesBaseFilteredRecords(true);
     compareTypes.forEach(t => {
       const occSets = {};
       months.forEach(k => { occSets[k] = new Set(); });
-      base.forEach(r => {
+      hierSource.forEach(r => {
         if (r.t !== t) return;
         const k = String(r.dt || '').substring(0, 7);
         if (occSets[k] && r.o) occSets[k].add(r.o);
@@ -9991,7 +9995,7 @@ function renderIssuesTrendCharts(records) {
   } else {
     const occSets = {};
     months.forEach(k => { occSets[k] = new Set(); });
-    records.forEach(r => {
+    hierSource.forEach(r => {
       const k = String(r.dt || '').substring(0, 7);
       if (occSets[k] && r.o) occSets[k].add(r.o);
     });
@@ -9999,10 +10003,10 @@ function renderIssuesTrendCharts(records) {
   }
 
   // Shared flight denominator: flights for all stations in the current scope
-  // (respects station/region/date/descriptor filters; type-independent so rates are comparable)
-  const scopeSource = compareTypes.length ? _getIssuesBaseFilteredRecords(true) : records;
+  // (respects station/region/date/descriptor + drill-down filters;
+  //  type-independent so rates are comparable)
   const stations = new Set();
-  scopeSource.forEach(r => {
+  hierSource.forEach(r => {
     const iata = (ICAO_TO_IATA_GLOBAL && ICAO_TO_IATA_GLOBAL[r.c]) || r.c;
     if (iata && typeof FLIGHT_COUNTS !== 'undefined' && FLIGHT_COUNTS && FLIGHT_COUNTS[iata]) stations.add(iata);
   });
@@ -10045,6 +10049,11 @@ function renderIssuesTrendCharts(records) {
 
   const scopeParts = [];
   if (compareTypes.length) scopeParts.push(`comparing ${compareTypes.join(', ')}`);
+  const hierParts = [];
+  if (_issuesDescSetFilter) hierParts.push(_issuesDescSetFilter);
+  if (_issuesL1Filter) hierParts.push(_issuesL1Filter);
+  if (_issuesL2Filter) hierParts.push(_issuesL2Filter);
+  if (hierParts.length) scopeParts.push(`drill \u2192 ${hierParts.join(' \u2192 ')}`);
   scopeParts.push(stationScope || `${stations.size.toLocaleString()} stations`);
   const scope = scopeParts.join(' \u00b7 ');
   const hasDateFilter = !!(document.getElementById('dash-issues-date-from')?.value || document.getElementById('dash-issues-date-to')?.value);
