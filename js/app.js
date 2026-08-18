@@ -161,6 +161,133 @@ const RPI_SETTINGS_KEY = 'stationRiskRpiSettings';
 const CONTRACTOR_IMPORTER = 't1-crsapi_p';
 const ALL_AXES = [...AXES.partA, ...AXES.partB, ...AXES.partC];
 
+// ── Contractor company identification ────────────────────────────────────────
+// Domain → company name mapping (corporate email domains found in report data)
+const CONTRACTOR_DOMAIN_MAP = {
+  'gtadnata.ca': 'GTA dnata',
+  'dnata.ca': 'GTA dnata',
+  'dnata.co.uk': 'DNATA',
+  'agi.aero': 'AGI',
+  'agi.com': 'AGI',
+  'cargojet.com': 'Cargojet',
+  'executiveaviation.ca': 'Executive Aviation',
+  'executuveaviation.ca': 'Executive Aviation',
+  'excutivevaiation.ca': 'Executive Aviation',
+  'menziesaviation.com': 'Menzies Aviation',
+  'johnmenzies.aero': 'Menzies Aviation',
+  'johnmenzies.com': 'Menzies Aviation',
+  'unifiservice.com': 'Unifi Service',
+  'swissport.com': 'Swissport',
+  'wearegat.net': 'GAT',
+  'yhzgateway.com': 'Gateway Halifax',
+  'maintair.com': 'Maintair',
+  'maintair.ca': 'Maintair',
+  'cityservice.fr': 'CityService',
+  'cobaltgs.com': 'Cobalt Ground Solutions',
+  'eulen.com': 'Eulen',
+  'integracargo.com': 'Integra Cargo',
+  'samsic.aero': 'Samsic',
+  'primeflight.com': 'PrimeFlight',
+  'deltadfm.com': 'Delta FM',
+  'efcaviation.ca': 'EFC Aviation',
+  'kfaero.ca': 'KF Aero',
+  'avjet.ca': 'AvJet',
+  'seawings.ca': 'SeaWings',
+  'ashandling.com': 'AS Handling',
+  'ace-mexico.com': 'ACE Mexico',
+  'nfsbahamas.com': 'NFS Bahamas',
+  'aviapartner.aero': 'AviaPartner',
+  'wfs.aero': 'WFS',
+  'ilearnea.com': 'iLearn',
+  'ats-nt.co.jp': 'ATS Japan',
+  'northislandaviation@hotmail.com': 'North Island Aviation',
+  'northislandavaition@hotmail.com': 'North Island Aviation',
+};
+
+// Generic email providers → need station-based lookup
+const GENERIC_EMAIL_DOMAINS = new Set([
+  'gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com',
+  'protonmail.com', 'icloud.com', 'me.com', 'shaw.ca',
+  'live.com', 'msn.com', 'aol.com', 'mail.com', 'proton.me',
+]);
+
+// Station → dominant ground handler (built from data analysis of corporate email domains per station)
+const STATION_HANDLER_MAP = {
+  YYC: 'GTA dnata', YYZ: 'GTA dnata', YVR: 'GTA dnata',
+  YEG: 'Cargojet', YUL: 'Swissport', YWG: 'Unifi Service',
+  YHZ: 'Gateway Halifax', YQR: 'AGI', YXE: 'AGI',
+  YLW: 'Executive Aviation', YXX: 'Executive Aviation',
+  YXS: 'Executive Aviation', YQQ: 'Executive Aviation',
+  YYJ: 'Executive Aviation', YMM: 'Executive Aviation',
+  YFC: 'Executive Aviation', YBL: 'Executive Aviation',
+  YBR: 'Executive Aviation', YKA: 'Executive Aviation',
+  YXC: 'Executive Aviation', YKF: 'Executive Aviation',
+  YOW: 'Unifi Service', YTZ: 'GTA dnata',
+  YHM: 'GTA dnata', YKZ: 'GTA dnata',
+  CUN: 'GTA dnata', PVR: 'GTA dnata', SJD: 'GTA dnata',
+  HUX: 'Executive Aviation', LTO: 'Executive Aviation',
+  MID: 'Executive Aviation', PXM: 'Executive Aviation',
+  TPQ: 'Executive Aviation', TQO: 'Executive Aviation',
+  LHR: 'Menzies Aviation', LGW: 'Menzies Aviation',
+  EDI: 'Menzies Aviation', GLA: 'Menzies Aviation',
+  MAN: 'Menzies Aviation', BHX: 'Menzies Aviation',
+  NCL: 'Menzies Aviation', CDG: 'AviaPartner',
+  AMS: 'AviaPartner', CPH: 'AviaPartner',
+  DUB: 'CityService', LIS: 'Cobalt Ground Solutions',
+  MAD: 'Eulen', FRA: 'Samsic',
+  NRT: 'ATS Japan', ICN: 'ATS Japan',
+  BOS: 'Unifi Service', DTW: 'AGI',
+  FLL: 'GTA dnata', MIA: 'GTA dnata',
+  TPA: 'PrimeFlight', MCO: 'PrimeFlight',
+  JAX: 'PrimeFlight', RSW: 'PrimeFlight',
+  SJU: 'Integra Cargo', NAS: 'NFS Bahamas',
+  MBJ: 'ACE Mexico', LIR: 'ACE Mexico',
+  GCM: 'Cobalt Ground Solutions',
+  GND: 'Unifi Service', POS: 'Unifi Service',
+  BGI: 'Unifi Service', PLS: 'Cobalt Ground Solutions',
+  YYT: 'Executive Aviation', YQX: 'Executive Aviation',
+  YHZ: 'Gateway Halifax', YGK: 'Executive Aviation',
+  YOW: 'Executive Aviation', YQB: 'GTA dnata',
+  YQG: 'Executive Aviation', YQY: 'Executive Aviation',
+  YQZ: 'Executive Aviation', YSB: 'Executive Aviation',
+  YTS: 'Executive Aviation', YVO: 'Executive Aviation',
+  YXU: 'Executive Aviation', YYB: 'Executive Aviation',
+  YYG: 'Executive Aviation', YYQ: 'Executive Aviation',
+  YYW: 'Executive Aviation', YZE: 'Executive Aviation',
+  CZEG: 'GTA dnata', CYEG: 'GTA dnata',
+};
+
+// Generic email → known company patterns found in descriptions
+const GENERIC_EMAIL_COMPANY_PATTERNS = [
+  { email: 'glavrasupervisors@gmail.com', company: 'GAT' },
+  { email: 'northislandaviation@hotmail.com', company: 'North Island Aviation' },
+  { email: 'northislandavaition@hotmail.com', company: 'North Island Aviation' },
+];
+
+const _DOMAIN_TO_COMPANY = {};
+Object.entries(CONTRACTOR_DOMAIN_MAP).forEach(([domain, company]) => {
+  _DOMAIN_TO_COMPANY[domain.toLowerCase()] = company;
+});
+
+function _extractContractorCompany(text, stationIata) {
+  if (!text) return null;
+  const emails = text.match(_EMAIL_RE);
+  if (!emails || !emails.length) {
+    return stationIata ? (STATION_HANDLER_MAP[stationIata] || null) : null;
+  }
+  for (const email of emails) {
+    const lower = email.toLowerCase();
+    const known = GENERIC_EMAIL_COMPANY_PATTERNS.find(p => lower === p.email.toLowerCase());
+    if (known) return known.company;
+    const domain = lower.split('@')[1];
+    if (!domain) continue;
+    if (GENERIC_EMAIL_DOMAINS.has(domain)) continue;
+    const company = _DOMAIN_TO_COMPANY[domain];
+    if (company) return company;
+  }
+  return stationIata ? (STATION_HANDLER_MAP[stationIata] || null) : null;
+}
+
 let isitTaxonomy = [];
 
 function escHtml(str) {
@@ -6186,6 +6313,7 @@ function renderReportersPage() {
   }
 
   const regionFilter = document.getElementById('reporters-page-region')?.value || '';
+  const companyFilter = document.getElementById('reporters-page-company')?.value || '';
   const searchFilter = (document.getElementById('reporters-page-search')?.value || '').toLowerCase().trim();
 
   // Populate region dropdown
@@ -6202,14 +6330,16 @@ function renderReportersPage() {
     if (regionFilter && getStationRegion(iata) !== regionFilter) return;
     reports.forEach(r => {
       const reporter = r.i || 'Unknown';
-      if (!reportersMap[reporter]) reportersMap[reporter] = { name: reporter, imported: 0, closed: 0, open: 0, types: {}, stations: {} };
+      if (!reportersMap[reporter]) reportersMap[reporter] = { name: reporter, imported: 0, closed: 0, open: 0, types: {}, stations: {}, companies: {} };
       reportersMap[reporter].imported++;
       const t = r.t || 'Unknown';
       reportersMap[reporter].types[t] = (reportersMap[reporter].types[t] || 0) + 1;
       reportersMap[reporter].stations[iata] = (reportersMap[reporter].stations[iata] || 0) + 1;
+      const company = STATION_HANDLER_MAP[iata] || null;
+      if (company) reportersMap[reporter].companies[company] = (reportersMap[reporter].companies[company] || 0) + 1;
       if (r.b) {
         const closer = r.b;
-        if (!reportersMap[closer]) reportersMap[closer] = { name: closer, imported: 0, closed: 0, open: 0, types: {}, stations: {} };
+        if (!reportersMap[closer]) reportersMap[closer] = { name: closer, imported: 0, closed: 0, open: 0, types: {}, stations: {}, companies: {} };
         reportersMap[closer].closed++;
       }
     });
@@ -6220,11 +6350,26 @@ function renderReportersPage() {
     ...v,
     stationCount: Object.keys(v.stations).length,
     topType: Object.entries(v.types).sort((a, b) => b[1] - a[1])[0]?.[0] || '',
+    topCompany: Object.entries(v.companies).sort((a, b) => b[1] - a[1])[0]?.[0] || '',
   }));
+
+  // Populate company dropdown
+  const compSel = document.getElementById('reporters-page-company');
+  if (compSel && compSel.options.length <= 1) {
+    const allCompanies = new Set();
+    reportersArr.forEach(r => { if (r.topCompany) allCompanies.add(r.topCompany); });
+    const sorted = [...allCompanies].sort();
+    compSel.innerHTML = '<option value="">All Companies</option>' +
+      sorted.map(c => `<option value="${escAttr(c)}">${escHtml(c)}</option>`).join('');
+  }
+
+  if (companyFilter) {
+    reportersArr = reportersArr.filter(r => r.topCompany === companyFilter);
+  }
 
   if (searchFilter) {
     reportersArr = reportersArr.filter(r =>
-      r.name.toLowerCase().includes(searchFilter) || (r.topType || '').toLowerCase().includes(searchFilter)
+      r.name.toLowerCase().includes(searchFilter) || (r.topType || '').toLowerCase().includes(searchFilter) || (r.topCompany || '').toLowerCase().includes(searchFilter)
     );
   }
 
@@ -6241,8 +6386,9 @@ function renderReportersPage() {
     return;
   }
 
-  el.innerHTML = `<div class="advisor-reporters-header" style="grid-template-columns:1fr 70px 70px 55px 90px 90px">
+  el.innerHTML = `<div class="advisor-reporters-header" style="grid-template-columns:1fr 120px 70px 70px 55px 90px 90px">
       <span class="adv-rpt-name">Reporter</span>
+      <span class="adv-rpt-type">Company</span>
       <span class="adv-rpt-num">Imported</span>
       <span class="adv-rpt-num">Closed</span>
       <span class="adv-rpt-num">Open</span>
@@ -6250,8 +6396,9 @@ function renderReportersPage() {
       <span class="adv-rpt-type">Stations</span>
     </div>` + reportersArr.map(r => {
     const openClass = r.open > 5 ? 'adv-rpt-open-high' : r.open > 0 ? 'adv-rpt-open-mid' : '';
-    return `<div class="advisor-reporter-row" style="grid-template-columns:1fr 70px 70px 55px 90px 90px" data-reporter="${escHtml(r.name)}">
+    return `<div class="advisor-reporter-row" style="grid-template-columns:1fr 120px 70px 70px 55px 90px 90px" data-reporter="${escHtml(r.name)}">
       <span class="adv-rpt-name"><a href="#" class="advisor-link" data-advisor="${escHtml(r.name)}">${escHtml(r.name)}</a></span>
+      <span class="adv-rpt-type" title="${Object.entries(r.companies).map(([c, n]) => `${c}: ${n}`).join('\n') || 'Unknown'}">${escHtml(r.topCompany || 'Unknown')}</span>
       <span class="adv-rpt-num">${r.imported}</span>
       <span class="adv-rpt-num">${r.closed}</span>
       <span class="adv-rpt-num ${openClass}">${r.open}</span>
@@ -6319,7 +6466,7 @@ function computeCoverageMetrics() {
     if (!rec) {
       const s = stations[iata] || {};
       const flights = getFlightVolumeByDate(iata, '', '') || getFlightVolume({ iataCode: iata, name: s.name || iata }) || null;
-      rec = { iata, name: s.name || iata, region: getStationRegion(iata), contractor: 0, westjet: 0, lastContractor: null, lastWestjet: null, total: 0, flights, contractorByType: {} };
+      rec = { iata, name: s.name || iata, region: getStationRegion(iata), contractor: 0, westjet: 0, lastContractor: null, lastWestjet: null, total: 0, flights, contractorByType: {}, contractorByCompany: {} };
       perStation[iata] = rec;
     }
     const d = r.dt ? new Date(r.dt) : null;
@@ -6330,6 +6477,8 @@ function computeCoverageMetrics() {
       rec.contractor++;
       const t = r.t || '(none)';
       rec.contractorByType[t] = (rec.contractorByType[t] || 0) + 1;
+      const company = _extractContractorCompany(r.rd || r.st, iata) || 'Unknown Contractor';
+      rec.contractorByCompany[company] = (rec.contractorByCompany[company] || 0) + 1;
       if (d && (!rec.lastContractor || d > rec.lastContractor)) rec.lastContractor = d;
     } else {
       rec.westjet++;
@@ -6381,8 +6530,14 @@ function coveragePopupHtml(iata) {
   if (types.length) {
     typeBreakdown = `<div style="margin-top:2px;color:#9CA3AF">Contractor by type: ${types.map(([t, n]) => `${t} ${n}`).join(' · ')}</div>`;
   }
+  let companyBreakdown = '';
+  const companies = Object.entries(rec.contractorByCompany || {}).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  if (companies.length) {
+    companyBreakdown = `<div style="margin-top:2px;color:#9CA3AF">Contractor companies: ${companies.map(([c, n]) => `${c} (${n})`).join(' · ')}</div>`;
+  }
   return `<div style="margin-top:2px;padding:3px 6px;background:#F0FDF4;border-radius:4px;border:1px solid #BBF7D0;font-size:0.75rem;color:#166534">
     Efficiency: <strong>${eff}</strong> · Contractor: <strong>${c}</strong> <span style="color:#9CA3AF">(${counts}${exp})</span>
+    ${companyBreakdown}
     ${typeBreakdown}
   </div>`;
 }
@@ -6398,6 +6553,7 @@ function renderContractorCoverage() {
   const months = Math.max(1, Math.min(24, parseInt(document.getElementById('coverage-months')?.value, 10) || 3));
   const regionFilter = document.getElementById('coverage-region')?.value || '';
   const statusFilter = document.getElementById('coverage-status')?.value || '';
+  const companyFilter = document.getElementById('coverage-company')?.value || '';
   const searchFilter = (document.getElementById('coverage-search')?.value || '').toLowerCase().trim();
 
   // Populate region dropdown once
@@ -6415,6 +6571,18 @@ function renderContractorCoverage() {
     return;
   }
   const perStation = cm.perStation;
+
+  // Populate company dropdown from all contractor companies across stations
+  const compSel = document.getElementById('coverage-company');
+  if (compSel && compSel.options.length <= 1) {
+    const allCompanies = new Set();
+    Object.values(perStation).forEach(rec => {
+      Object.keys(rec.contractorByCompany || {}).forEach(c => allCompanies.add(c));
+    });
+    const sorted = [...allCompanies].sort();
+    compSel.innerHTML = '<option value="">All Companies</option>' +
+      sorted.map(c => `<option value="${escAttr(c)}">${escHtml(c)}</option>`).join('');
+  }
   const networkContractorRate = cm.networkContractorRate;
   const netRate1k = networkContractorRate * 1000;
 
@@ -6438,6 +6606,7 @@ function renderContractorCoverage() {
   let filtered = rows;
   if (regionFilter) filtered = filtered.filter(r => r.region === regionFilter);
   if (statusFilter) filtered = filtered.filter(r => r.status === statusFilter);
+  if (companyFilter) filtered = filtered.filter(r => (r.contractorByCompany || {})[companyFilter]);
   if (searchFilter) filtered = filtered.filter(r =>
     r.name.toLowerCase().includes(searchFilter) || r.iata.toLowerCase().includes(searchFilter)
   );
@@ -6549,11 +6718,13 @@ function renderContractorCoverage() {
       <span class="adv-rpt-num coverage-sortable" data-sort="lastWestjet">Last W${sortArrow('lastWestjet')}</span>
       <span class="adv-rpt-type">Status</span>
     </div>` + filtered.map(r => {
+    const topCompanies = Object.entries(r.contractorByCompany || {}).sort((a, b) => b[1] - a[1]).slice(0, 2);
+    const companyLabel = topCompanies.length ? topCompanies.map(([c, n]) => `${c} (${n})`).join(', ') : '—';
     return `<div class="advisor-reporter-row coverage-row" style="grid-template-columns:1.3fr 1fr 140px 80px 80px 70px 110px 110px 120px">
       <span class="adv-rpt-name">${escHtml(r.name)} <span style="color:var(--color-text-muted);font-size:0.7rem">${r.iata}</span></span>
       <span class="adv-rpt-type">${escHtml(r.region || '—')}</span>
       <span class="adv-rpt-num">${effBar(r)}</span>
-      <span class="adv-rpt-num ${r.contractor > 0 ? 'coverage-num-contractor' : ''}" title="${escHtml(cTypeTooltip(r))}">${r.contractor}</span>
+      <span class="adv-rpt-num ${r.contractor > 0 ? 'coverage-num-contractor' : ''}" title="${escHtml(cTypeTooltip(r))}\n\nCompanies:\n${Object.entries(r.contractorByCompany || {}).map(([c, n]) => `  ${c}: ${n}`).join('\n') || 'None'}">${r.contractor}</span>
       <span class="adv-rpt-num">${r.westjet}</span>
       <span class="adv-rpt-num">${r.contractorShare.toFixed(1)}%</span>
       <span class="adv-rpt-num ${r.lastContractor ? '' : 'adv-rpt-type'}">${fmtDate(r.lastContractor)}</span>
@@ -9118,7 +9289,7 @@ function init() {
     if (e.target.id === 'reporters-page-search') renderReportersPage();
   });
   document.getElementById('reporters-view')?.addEventListener('change', e => {
-    if (e.target.id === 'reporters-page-region') renderReportersPage();
+    if (e.target.id === 'reporters-page-region' || e.target.id === 'reporters-page-company') renderReportersPage();
   });
   document.getElementById('reporters-view')?.addEventListener('click', e => {
     const link = e.target.closest('.advisor-link');
@@ -9132,7 +9303,7 @@ function init() {
     if (e.target.id === 'coverage-months' || e.target.id === 'coverage-search') renderContractorCoverage();
   });
   document.getElementById('coverage-view')?.addEventListener('change', e => {
-    if (e.target.id === 'coverage-region' || e.target.id === 'coverage-status') renderContractorCoverage();
+    if (e.target.id === 'coverage-region' || e.target.id === 'coverage-status' || e.target.id === 'coverage-company') renderContractorCoverage();
   });
   document.getElementById('coverage-view')?.addEventListener('click', e => {
     const th = e.target.closest('[data-sort]');
