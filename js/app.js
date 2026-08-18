@@ -6281,6 +6281,16 @@ function parseOaptDate(str) {
 let _coverageMetricsCache = null;
 let _contractorOccSet = null;
 
+const _EMAIL_RE = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+const _WJ_EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@westjet\.com$/i;
+
+function _hasNonWestJetEmail(text) {
+  if (!text) return false;
+  const emails = text.match(_EMAIL_RE);
+  if (!emails) return false;
+  return emails.some(e => !_WJ_EMAIL_RE.test(e));
+}
+
 function _buildContractorOccSet() {
   if (_contractorOccSet) return _contractorOccSet;
   const set = new Set();
@@ -6315,7 +6325,8 @@ function computeCoverageMetrics() {
     const d = r.dt ? new Date(r.dt) : null;
     if (d && (!globalMax || d > globalMax)) globalMax = d;
     rec.total++;
-    if (contractorOccs.has(r.o)) {
+    const isContractor = contractorOccs.has(r.o) || _hasNonWestJetEmail(r.rd) || _hasNonWestJetEmail(r.st);
+    if (isContractor) {
       rec.contractor++;
       const t = r.t || '(none)';
       rec.contractorByType[t] = (rec.contractorByType[t] || 0) + 1;
