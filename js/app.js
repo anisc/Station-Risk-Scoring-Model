@@ -9048,7 +9048,7 @@ function init() {
   ['rankings-filter-sp', 'list-filter-sp', 'dash-filter-sp'].forEach(id => populateSpFilter(id));
   ['rankings-filter-region', 'list-filter-region', 'dash-filter-region'].forEach(id => populateRegionFilter(id));
   ['rankings-filter-airline', 'list-filter-airline', 'dash-filter-airline'].forEach(id => populateAirlineFilter(id));
-  ['rankings-filter-aircraft', 'list-filter-aircraft', 'dash-filter-aircraft'].forEach(id => populateAircraftFilter(id));
+  ['rankings-filter-aircraft', 'list-filter-aircraft', 'dash-filter-aircraft', 'dash-issues-aircraft'].forEach(id => populateAircraftFilter(id));
 
   renderDashboard();
   renderForm();
@@ -9590,8 +9590,7 @@ function renderCrsMergedIssues() {
   const dateFrom = document.getElementById('dash-issues-date-from')?.value || '';
   const dateTo = document.getElementById('dash-issues-date-to')?.value || '';
   const searchFilter = (document.getElementById('dash-issues-search')?.value || '').toLowerCase();
-  const airlineFilter = (document.getElementById('dash-filter-airline')?.value || '').trim();
-  const aircraftFilter = (document.getElementById('dash-filter-aircraft')?.value || '').trim();
+  const aircraftFilter = (document.getElementById('dash-issues-aircraft')?.value || '').trim();
 
   // Apply region filter from region card clicks
   const regionFilter = _issuesRegionFilter || '';
@@ -9626,7 +9625,6 @@ function renderCrsMergedIssues() {
       if (dateFrom && dt < dateFrom) return false;
       if (dateTo && dt > dateTo) return false;
     }
-    if (airlineFilter && r.al !== airlineFilter) return false;
     if (aircraftFilter && r.ac !== aircraftFilter) return false;
     if (searchFilter) {
       if (!recordMatchesQuery(r, searchFilter)) return false;
