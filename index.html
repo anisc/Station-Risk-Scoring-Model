@@ -13,6 +13,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <script src="js/isit_taxonomy.js"></script>
+  <script src="js/audit_pillar.js"></script>
   <script src="data/flight_counts.js"></script>
   <script src="data/countries.js"></script>
   <script src="data/states.js"></script>
@@ -65,6 +66,7 @@
     <button class="tab" data-view="map" id="tab-map">Map</button>
     <button class="tab" data-view="dist" id="tab-dist">Distribution</button>
     <button class="tab" data-view="issues" id="tab-issues">Issues</button>
+    <button class="tab" data-view="prediction" id="tab-prediction">Near-Miss Prediction</button>
     <button class="tab" data-view="reporters" id="tab-reporters">Reporters</button>
     <button class="tab" data-view="coverage" id="tab-coverage">Contractor Coverage</button>
     <button class="tab" data-view="import" id="tab-import">Import Data</button>
@@ -368,48 +370,121 @@
             </div>
           </div>
 
-          <!-- Operational Context & Incidents -->
-          <div class="form-section" id="operational-section">
-            <h3>Operational Context &amp; Incidents</h3>
-            <p class="section-desc">Operational data feeds into the <strong>Operational Multiplier
-                (M<sub>op</sub>)</strong>, applied to the final risk score. QCI &lt; 50 or audit findings with
-              "critical"/"major" increase risk; QCI &gt; 90 decreases risk.</p>
+          <!-- Audit & QCI — SMPRI Pillar D -->
+          <div class="form-section" id="pillarD-section">
+            <h3>
+              <span class="badge badge-d">Pillar D</span>
+              Audit &amp; QCI — Group Audit Execution Evidence
+            </h3>
+            <p class="section-desc">Feeds <strong>SMPRI Pillar D</strong>: deficiency load (L), CAP timeliness
+              (T) and recurrence (P) from Group Audit ATW/BTW checklist audits, blended 70/30 with the QCI
+              inspection stream. Findings and Major Findings open corrective-action plans under a
+              10-business-day SLA; observations rectified during the audit earn self-correction credit.</p>
 
-            <div class="field-row-inline">
-              <div class="field-group">
-                <label for="op-flight-numbers">Flight Numbers</label>
-                <input type="text" id="op-flight-numbers" placeholder="e.g. 45" inputmode="numeric">
+            <div id="fd-empty" style="display:none">
+              <p class="field-hint">Enter a station above to log and associate its audits.</p>
+            </div>
+
+            <div id="fd-panel" style="display:none">
+              <div class="field-row-inline">
+                <div class="field-group">
+                  <label for="fd-type">Audit Type</label>
+                  <select id="fd-type">
+                    <option value="ATW">ATW checklist audit</option>
+                    <option value="BTW">BTW checklist audit</option>
+                    <option value="QCI">QCI inspection</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="fd-date">Audit Date</label>
+                  <input type="date" id="fd-date">
+                </div>
+                <div class="field-group">
+                  <label for="fd-auditor">Auditor</label>
+                  <input type="text" id="fd-auditor" placeholder="e.g. J. Smith">
+                </div>
               </div>
-              <div class="field-group">
-                <label for="op-exposure">Exposure <span class="field-hint">(e.g. passengers/yr)</span></label>
-                <input type="text" id="op-exposure" placeholder="e.g. 250000" inputmode="numeric">
+              <div class="field-row-inline">
+                <div class="field-group">
+                  <label for="fd-items-app">Items Applicable</label>
+                  <input type="number" id="fd-items-app" min="0" inputmode="numeric">
+                </div>
+                <div class="field-group">
+                  <label for="fd-items-obs">Items Observed</label>
+                  <input type="number" id="fd-items-obs" min="0" inputmode="numeric">
+                </div>
+                <div class="field-group">
+                  <label for="fd-items-comp">Items Compliant</label>
+                  <input type="number" id="fd-items-comp" min="0" inputmode="numeric">
+                </div>
               </div>
+
+              <div class="field-group" style="margin-top:1rem">
+                <label>Findings &amp; Observations</label>
+                <div id="fd-findings-rows"></div>
+                <button type="button" id="fd-add-finding" class="btn btn-secondary btn-sm"
+                  style="margin-top:0.4rem">+ Add finding row</button>
+              </div>
+
+              <div style="margin-top:1rem;display:flex;align-items:center;gap:1rem">
+                <button id="fd-save" class="btn btn-primary">Save Audit</button>
+                <span id="fd-save-status" class="field-hint"></span>
+              </div>
+
+              <hr style="margin:1.5rem 0;border:none;border-top:1px solid var(--color-border,#E5E7EB)">
+
+              <div id="fd-scorecard"></div>
+
+              <hr style="margin:1.5rem 0;border:none;border-top:1px solid var(--color-border,#E5E7EB)">
+
               <div class="field-group">
-                <label for="op-qci">QCI Score <span class="field-hint">(0–100)</span></label>
-                <input type="text" id="op-qci" placeholder="e.g. 85" inputmode="numeric">
+                <label>Audits &amp; findings for this station</label>
+                <div id="fd-register"></div>
               </div>
             </div>
 
-            <div class="field-group" style="margin-top:1rem">
-              <label for="op-audit-findings">Audit Findings &amp; Observations</label>
-              <textarea id="op-audit-findings" rows="3"
-                placeholder="Describe audit findings and observations..."></textarea>
+            <hr style="margin:1.5rem 0;border:none;border-top:1px solid var(--color-border,#E5E7EB)">
+
+            <div class="field-group">
+              <label>Network Pillar D scorecard
+                <span class="field-hint" style="font-weight:400">window ending
+                  <input type="date" id="aud-enddate" style="font-size:0.72rem;padding:1px 4px">
+                </span>
+              </label>
+              <p class="field-hint" style="margin:0.2rem 0 0.4rem">Marks: Major Finding 100 · Finding 30 ·
+                Observation 5 (credited ×0.3 when rectified during the audit) · Compliant / NA / Not Observed 0.
+                Pillar&nbsp;D = 0.45·z(L) + 0.35·z(T) + 0.20·z(P), blended 70/30 with the standardized QCI stream.
+                Stations need ≥20 observed items in the window to activate a stream.</p>
+              <div id="aud-scorecard" style="overflow-x:auto"></div>
             </div>
 
+            <hr style="margin:1.5rem 0;border:none;border-top:1px solid var(--color-border,#E5E7EB)">
+
             <div class="field-group" style="margin-top:1rem">
-              <label>Incident Report Trends</label>
-              <p class="field-hint" style="margin:0 0 0.4rem">Search and tag stations with IATA ISIT taxonomy
-                descriptors</p>
-              <div class="autocomplete-wrapper">
-                <input type="text" id="op-incident-search"
-                  placeholder="Search taxonomy (e.g. Ramp, Spillage, Runway)...">
-                <div id="op-incident-results" class="autocomplete-results"></div>
+              <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.5rem">
+                <label style="margin:0">Findings register &amp; CAP tracking — all stations</label>
+                <select id="aud-reg-station" class="filter-select" style="font-size:0.72rem"><option value="">All stations</option></select>
+                <select id="aud-reg-status" class="filter-select" style="font-size:0.72rem">
+                  <option value="">All statuses</option>
+                  <option>Open</option>
+                  <option>CAP Received</option>
+                  <option>Closed</option>
+                  <option>Verified</option>
+                  <option>Reopened</option>
+                </select>
+                <span id="aud-reg-count" style="font-size:0.72rem;color:var(--color-text-muted)"></span>
               </div>
-              <div id="op-incident-tags" class="tag-list"></div>
-              <div id="incident-trend-chart-wrapper" style="margin-top:1.5rem;display:none">
-                <label>Incident Trend Frequency</label>
-                <canvas id="incident-trend-chart" height="120"></canvas>
-              </div>
+              <div id="aud-register" style="overflow-x:auto"></div>
+            </div>
+
+            <hr style="margin:1.5rem 0;border:none;border-top:1px solid var(--color-border,#E5E7EB)">
+
+            <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+              <button id="aud-export" class="btn btn-secondary" style="padding:4px 12px;font-size:0.75rem">Export JSON</button>
+              <label class="btn btn-secondary" for="aud-import-file" style="padding:4px 12px;font-size:0.75rem;cursor:pointer">Import JSON</label>
+              <input type="file" id="aud-import-file" accept=".json" style="display:none">
+              <button id="aud-clear" class="btn btn-danger" style="padding:4px 12px;font-size:0.75rem">Clear all audit data</button>
+              <span id="aud-data-status" style="font-size:0.72rem;color:var(--color-text-muted)"></span>
             </div>
           </div>
 
@@ -1168,6 +1243,75 @@
       </div>
     </section>
 
+    <!-- ── QA Audits & QCI (Pillar D) ─────────────────────────────────────── -->
+<!-- ── Near-Miss Prediction Experiment ─────────────────────────────── -->
+    <section id="prediction-view" class="view" aria-label="OAPT near-miss to SAPT event prediction experiment">
+      <div class="dash-panel dash-issues-panel">
+        <h3>Near-Miss Prediction Experiment <span class="dash-part-sub">Do SD-classified OAPT reports predict SAPT events of the same descriptor?</span></h3>
+        <p style="font-size:0.75rem;color:var(--color-text-muted);max-width:900px">
+          OAPT ground reports are reclassified with the Safety Descriptors taxonomy (keyword classifier) and compared
+          against SAPT/E-SAPT events carrying their official SD classification (TapRooT). Spearman rank correlations are
+          computed across stations; <em>share-adjusted</em> rho correlates descriptor proportions of station totals,
+          which removes the generic &ldquo;busy station reports more of everything&rdquo; effect. p-values via permutation test.
+        </p>
+        <div id="pred-summary" style="display:flex;gap:0.75rem;flex-wrap:wrap;margin:0.75rem 0"></div>
+        <div class="dash-grid-2" style="margin-top:0.75rem">
+          <div class="dash-panel" style="box-shadow:none;padding:0.75rem">
+            <h4 style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;color:var(--color-text)">
+              Same-descriptor correlation by station
+              <select id="pred-descriptor" class="filter-select" style="margin-left:0.5rem;font-size:0.72rem">
+                <option value="">Loading…</option>
+              </select>
+            </h4>
+            <div class="chart-container" style="height:300px">
+              <canvas id="pred-scatter-chart"></canvas>
+            </div>
+            <p id="pred-scatter-note" style="font-size:0.7rem;color:var(--color-text-muted);margin:0.4rem 0 0"></p>
+          </div>
+          <div class="dash-panel" style="box-shadow:none;padding:0.75rem">
+            <h4 style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;color:var(--color-text)">Results by Safety Descriptor</h4>
+            <div id="pred-table" style="overflow-x:auto"></div>
+          </div>
+        </div>
+        <div class="dash-panel" style="box-shadow:none;padding:0.75rem;margin-top:0.75rem">
+          <h4 style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;color:var(--color-text)">
+            Monthly volume — OAPT original classification vs SD classification vs SAPT events
+            <span style="font-weight:400;color:var(--color-text-muted)">(follows the descriptor picker)</span>
+          </h4>
+          <div class="chart-container" style="height:260px">
+            <canvas id="pred-trend-chart"></canvas>
+          </div>
+        </div>
+        <div class="dash-panel" style="box-shadow:none;padding:0.75rem;margin-top:0.75rem">
+          <h4 style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;color:var(--color-text)">
+            OAPT reclassification review — original vs Safety Descriptors
+          </h4>
+          <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.5rem">
+            <select id="pred-reclass-filter" class="filter-select" style="font-size:0.72rem">
+              <option value="">All comparable reports</option>
+              <option value="match">SD agrees with original</option>
+              <option value="differs">SD differs from original</option>
+            </select>
+            <span id="pred-reclass-info" style="font-size:0.7rem;color:var(--color-text-muted)"></span>
+            <span style="flex:1"></span>
+            <button id="pred-reclass-prev" class="filter-select" style="cursor:pointer">&larr; Prev</button>
+            <button id="pred-reclass-next" class="filter-select" style="cursor:pointer">Next &rarr;</button>
+          </div>
+          <div id="pred-reclass-table" style="overflow-x:auto"></div>
+        </div>
+        <div class="dash-grid-2" style="margin-top:0.75rem">
+          <div class="dash-panel" style="box-shadow:none;padding:0.75rem">
+            <h4 style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;color:var(--color-text)">Cross-descriptor leading-indicator candidates</h4>
+            <div id="pred-cross" style="overflow-x:auto"></div>
+          </div>
+          <div class="dash-panel" style="box-shadow:none;padding:0.75rem">
+            <h4 style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;color:var(--color-text)">Verdict</h4>
+            <div id="pred-verdict" style="font-size:0.75rem;color:var(--color-text)"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ── Import Data ──────────────────────────────────────────────────── -->
     <section id="import-view" class="view" aria-label="Import Data">
       <h2>Import Data Files</h2>
@@ -1320,18 +1464,23 @@
         </div>
         <div class="settings-form-row">
           <label>Weight A</label>
-          <input type="number" id="settings-weight-a" class="settings-input" style="max-width:100px" step="0.01" min="0" max="1" placeholder="0.25">
+          <input type="number" id="settings-weight-a" class="settings-input" style="max-width:100px" step="0.01" min="0" max="1" placeholder="0.20">
           <span class="settings-desc" style="margin:0">Airport Authority assessment</span>
         </div>
         <div class="settings-form-row">
           <label>Weight B</label>
-          <input type="number" id="settings-weight-b" class="settings-input" style="max-width:100px" step="0.01" min="0" max="1" placeholder="0.25">
+          <input type="number" id="settings-weight-b" class="settings-input" style="max-width:100px" step="0.01" min="0" max="1" placeholder="0.20">
           <span class="settings-desc" style="margin:0">Service Provider assessment</span>
         </div>
         <div class="settings-form-row">
           <label>Weight C</label>
-          <input type="number" id="settings-weight-c" class="settings-input" style="max-width:100px" step="0.01" min="0" max="1" placeholder="0.25">
+          <input type="number" id="settings-weight-c" class="settings-input" style="max-width:100px" step="0.01" min="0" max="1" placeholder="0.20">
           <span class="settings-desc" style="margin:0">Combined assessment</span>
+        </div>
+        <div class="settings-form-row">
+          <label>Weight D</label>
+          <input type="number" id="settings-weight-d" class="settings-input" style="max-width:100px" step="0.01" min="0" max="1" placeholder="0.20">
+          <span class="settings-desc" style="margin:0">QA audit execution (findings, CAP, QCI)</span>
         </div>
         <div class="settings-form-row">
           <label>Weight R</label>

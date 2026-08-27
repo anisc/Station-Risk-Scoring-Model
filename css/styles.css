@@ -19,6 +19,8 @@
   --part-b-bg: rgba(34,197,94,0.12);
   --part-c:    #A855F7;
   --part-c-bg: rgba(168,85,247,0.12);
+  --part-d:    #F97316;
+  --part-d-bg: rgba(249,115,22,0.12);
 
   /* Risk tiers */
   --tier-low:       #65A30D;
@@ -158,6 +160,7 @@ header {
 .badge-a { background: var(--part-a-bg); color: var(--part-a); }
 .badge-b { background: var(--part-b-bg); color: var(--part-b); }
 .badge-c { background: var(--part-c-bg); color: var(--part-c); }
+.badge-d { background: var(--part-d-bg); color: var(--part-d); }
 
 /* ─── Tier badge system ──────────────────────────────────────────────────── */
 .tier-badge {

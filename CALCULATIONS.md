@@ -462,14 +462,43 @@ Converts each pillar into a standardized Z-score across the network, then takes 
 ### Formula
 
 ```
-SMPRI = w_A × z_A + w_B × z_B + w_C × z_C + w_R × z_R
+SMPRI = w_A × z_A + w_B × z_B + w_C × z_C + w_D × z_D + w_R × z_R
 ```
 
 Where:
 - **z_A = (A_avg − μ_A) / σ_A** — Part A Z-score
 - **z_B = (B_avg − μ_B) / σ_B** — Part B Z-score (worst SP)
 - **z_C = (C_weighted − μ_C) / σ_C** — Part C Z-score (weighted avg)
+- **z_D = (D − μ_D) / σ_D** — QA-audit execution pillar Z-score (see §5.1)
 - **z_R = logPScore** — already a standardized Z-score on the log-rate scale
+
+### 5.1 Pillar D — QA Audits & QCI (js/audit_pillar.js)
+
+Data entered via the **Station Input** tab (Pillar D section: station log form, per-station register, network scorecard and all-stations CAP register) and persisted in `localStorage` (`stationRiskAuditData_v1`) as three entities: audits, findings, append-only status events.
+
+**Mark → severity units u(m):**
+
+| Mark | Units | Notes |
+|------|-------|-------|
+| Major Finding (MF) | 100 | CAP mandatory |
+| Finding (F) | 30 | CAP mandatory |
+| Observation (OBS) | 5 × 0.3 = 1.5 | rectified during audit |
+| Compliant / NA / Not Observed | 0 | feed denominators only |
+
+**Sub-statistics (rolling 12-month window ending at the active To date):**
+
+```
+L_i = Σ_f u(m_f) × exp(−age_days / 365) / V_i          deficiency load ÷ items observed
+T_i = θ_i − ν_i                                         CAP SLA(10 business days)/due breaches − verified effectiveness
+P_i = (y + 0.5·y_cat) / n                               repeat findings by checklist ref; same root cause on a different ref counts half
+q_i = d_QCI + max(0, trend_6m)                          QCI deficiency rate incl. worsening trend
+D*_i = 0.45·z(L) + 0.35·z(T) + 0.20·z(P)
+D_i  = 0.70·D*_i + 0.30·z(q)                            enters SMPRI standardization as pillar-D statistic
+```
+
+- Streams activate at ≥20 observed items in the window; missing streams contribute neutral zero.
+- Stations without any audit data get z_D = 0 (network average), preserving graceful degradation.
+- Unit values live in `AuditPillar.MARKS` (config, not records) so a future likelihood×severity matrix migration is a lookup-table edit.
 
 ### Credibility-Gated Fusion
 
@@ -481,10 +510,10 @@ w_audit = 1.0 − w_R
 w_A = w_audit × (base_wA / Σbase_audit)
 w_B = w_audit × (base_wB / Σbase_audit)
 w_C = w_audit × (base_wC / Σbase_audit)
+w_D = w_audit × (base_wD / Σbase_audit)
 ```
 
-- **Low-volume station (Z ≈ 0.1):** 96% weight on Audit (Parts A/B/C), 4% on occurrences
-- **High-volume station (Z ≈ 0.95):** 62% weight on Audit, 38% on occurrence data
+Default base weights are 0.20 for each of A/B/C/D (Settings panel); `Σbase_audit` includes all four.
 
 ### Tier Thresholds
 

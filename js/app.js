@@ -296,11 +296,17 @@ function escHtml(str) {
   return d.innerHTML;
 }
 
+function _audTitle(p) {
+  if (!p) return 'No audit data';
+  const dash = '\u2014';
+  return 'L=' + (p.L != null ? p.L : dash) + ' T=' + (p.T != null ? p.T : dash) +
+    ' P=' + (p.P != null ? p.P : dash) + ' \u03ba=' + (p.kappa != null ? p.kappa + '%' : dash);
+}
+
 // Escape a string for safe use inside a double-quoted HTML attribute
 function escAttr(str) {
   return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
+    .replace(/&/g, '&amp;')    .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/'/g, '&#39;');
@@ -510,7 +516,7 @@ function saveAggMode() {
   localStorage.setItem(AGG_MODE_KEY, aggregationMode);
 }
 
-const RPI_DEFAULTS = { formula: 'option1', weightA: 0.25, weightB: 0.25, weightC: 0.25, weightR: 0.25 };
+const RPI_DEFAULTS = { formula: 'option1', weightA: 0.20, weightB: 0.20, weightC: 0.20, weightD: 0.20, weightR: 0.25 };
 function loadRpiSettings() {
   try {
     const saved = localStorage.getItem(RPI_SETTINGS_KEY);
@@ -1514,6 +1520,16 @@ function computeSmpriScore(station) {
     records.push({ iata, aAvg, bAvg, cAvg, logP });
   });
 
+  const auditNet = (typeof AuditPillar !== 'undefined')
+    ? AuditPillar.computeStats(dt || undefined)
+    : { stations: [] };
+  const auditByStation = {};
+  auditNet.stations.forEach(r => { auditByStation[r.station] = r; });
+  records.forEach(r => {
+    const row = auditByStation[String(r.iata).toUpperCase()];
+    r.dStat = row && row.D !== null && row.D !== undefined ? row.D : null;
+  });
+
   const calcStats = (vals) => {
     const valid = vals.filter(v => v !== null && !isNaN(v));
     if (!valid.length) return { mean: 0, std: 1 };
@@ -1525,6 +1541,12 @@ function computeSmpriScore(station) {
   const statsA = calcStats(records.map(r => r.aAvg));
   const statsB = calcStats(records.map(r => r.bAvg));
   const statsC = calcStats(records.map(r => r.cAvg));
+  const dValid = records.filter(r => r.dStat !== null).map(r => r.dStat);
+  const statsD = { count: dValid.length };
+  if (dValid.length) {
+    statsD.mean = dValid.reduce((a, b) => a + b, 0) / dValid.length;
+    statsD.std = Math.sqrt(dValid.reduce((s, v) => s + (v - statsD.mean) ** 2, 0) / dValid.length) || 1;
+  }
 
   const aAvg = calcAvg(station.partA.scores, AXES.partA);
   const worstB = getWorstPartB(station);
@@ -1536,23 +1558,28 @@ function computeSmpriScore(station) {
   const zA = aAvg !== null ? (aAvg - statsA.mean) / statsA.std : 0;
   const zB = bAvg !== null ? (bAvg - statsB.mean) / statsB.std : 0;
   const zC = cAvg !== null ? (cAvg - statsC.mean) / statsC.std : 0;
+  const stationAuditRow = auditByStation[String(iata).toUpperCase()];
+  const dStat = stationAuditRow && stationAuditRow.D !== null && stationAuditRow.D !== undefined ? stationAuditRow.D : null;
+  const zD = dStat !== null && statsD.count > 0 ? (dStat - statsD.mean) / statsD.std : 0;
   const zR = riskData ? riskData.logPScore : 0;
   const Z_cred = riskData ? riskData.credibility : 0;
 
-  const baseWA = rpiSettings.weightA;
-  const baseWB = rpiSettings.weightB;
-  const baseWC = rpiSettings.weightC;
+  const baseWA = rpiSettings.weightA != null ? rpiSettings.weightA : 0.20;
+  const baseWB = rpiSettings.weightB != null ? rpiSettings.weightB : 0.20;
+  const baseWC = rpiSettings.weightC != null ? rpiSettings.weightC : 0.20;
+  const baseWD = rpiSettings.weightD != null ? rpiSettings.weightD : 0.20;
   const baseWR = rpiSettings.weightR;
 
   const wR_cred = 0.40 * Z_cred;
   const wAudit = 1.0 - wR_cred;
-  const baseAuditSum = baseWA + baseWB + baseWC;
-  const wA = baseAuditSum > 0 ? wAudit * (baseWA / baseAuditSum) : wAudit / 3;
-  const wB = baseAuditSum > 0 ? wAudit * (baseWB / baseAuditSum) : wAudit / 3;
-  const wC = baseAuditSum > 0 ? wAudit * (baseWC / baseAuditSum) : wAudit / 3;
+  const baseAuditSum = baseWA + baseWB + baseWC + baseWD;
+  const wA = baseAuditSum > 0 ? wAudit * (baseWA / baseAuditSum) : wAudit / 4;
+  const wB = baseAuditSum > 0 ? wAudit * (baseWB / baseAuditSum) : wAudit / 4;
+  const wC = baseAuditSum > 0 ? wAudit * (baseWC / baseAuditSum) : wAudit / 4;
+  const wD = baseAuditSum > 0 ? wAudit * (baseWD / baseAuditSum) : wAudit / 4;
   const wR = wR_cred;
 
-  const smpri = wA * zA + wB * zB + wC * zC + wR * zR;
+  const smpri = wA * zA + wB * zB + wC * zC + wD * zD + wR * zR;
 
   const tier = smpri > 1.5 ? { tier: 'Very High', cls: 'tier-very-high', color: '#9F1239' }
     : smpri > 0.75 ? { tier: 'High', cls: 'tier-high', color: '#DC2626' }
@@ -1592,8 +1619,21 @@ function computeSmpriScore(station) {
     riskPerFlight: 0,
     sortScore: +smpri.toFixed(3),
     smpri: +smpri.toFixed(3),
-    zA: +zA.toFixed(2), zB: +zB.toFixed(2), zC: +zC.toFixed(2), zR: +zR.toFixed(2),
-    smpriWeights: { a: +wA.toFixed(4), b: +wB.toFixed(4), c: +wC.toFixed(4), r: +wR.toFixed(4) },
+    zA: +zA.toFixed(2), zB: +zB.toFixed(2), zC: +zC.toFixed(2), zD: +zD.toFixed(2), zR: +zR.toFixed(2),
+    smpriWeights: { a: +wA.toFixed(4), b: +wB.toFixed(4), c: +wC.toFixed(4), d: +wD.toFixed(4), r: +wR.toFixed(4) },
+    dParts: stationAuditRow ? {
+      L: stationAuditRow.L != null ? +stationAuditRow.L.toFixed(4) : null,
+      T: stationAuditRow.T != null ? +stationAuditRow.T.toFixed(3) : null,
+      P: stationAuditRow.P != null ? +stationAuditRow.P.toFixed(3) : null,
+      kappa: stationAuditRow.kappa != null ? +(stationAuditRow.kappa * 100).toFixed(1) : null,
+      qstat: stationAuditRow.qstat != null ? +stationAuditRow.qstat.toFixed(3) : null,
+      Dstar: +stationAuditRow.Dstar.toFixed(3),
+      Qstar: +stationAuditRow.Qstar.toFixed(3),
+      observed: stationAuditRow.observed,
+      nAudits: stationAuditRow.nAudits, nFindings: stationAuditRow.nFindings,
+      capsTotal: stationAuditRow.capsTotal, capsBreached: stationAuditRow.capsBreached,
+      qaActive: !!stationAuditRow.qaActive, qciActive: !!stationAuditRow.qciActive
+    } : null,
     aAvg,
     bAvg,
     cAvg,
@@ -2113,10 +2153,14 @@ function buildTagHtml(entry) {
 
 function loadOperationalDataIntoForm(station) {
   const op = station.operationalData || {};
-  document.getElementById('op-flight-numbers').value = op.flightNumbers || '';
-  document.getElementById('op-exposure').value = op.exposure || '';
-  document.getElementById('op-qci').value = op.qci || '';
-  document.getElementById('op-audit-findings').value = op.auditFindings || '';
+  const setV = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.value = v ?? '';
+  };
+  setV('op-flight-numbers', op.flightNumbers);
+  setV('op-exposure', op.exposure);
+  setV('op-qci', op.qci);
+  setV('op-audit-findings', op.auditFindings);
 
   // Tags
   const tagsContainer = document.getElementById('op-incident-tags');
@@ -2196,6 +2240,7 @@ function loadStationIntoForm(iata) {
   renderIncidentTrendChart(currentStation);
   renderStationIcaoContext(currentStation);
   highlightAxisScores();
+  renderFormPillarD();
 }
 
 function buildAxisInputs(containerId, axes, part) {
@@ -2226,10 +2271,16 @@ function saveOperationalDataFromForm(station) {
     station.operationalData = emptyStation('').operationalData;
   }
   const op = station.operationalData;
-  op.flightNumbers = document.getElementById('op-flight-numbers').value;
-  op.exposure = document.getElementById('op-exposure').value;
-  op.qci = document.getElementById('op-qci').value;
-  op.auditFindings = document.getElementById('op-audit-findings').value;
+  // Inputs removed from the form (replaced by the Pillar D panel): only
+  // overwrite stored values when the field is actually present.
+  const setIfPresent = (id, key) => {
+    const el = document.getElementById(id);
+    if (el) op[key] = el.value;
+  };
+  setIfPresent('op-flight-numbers', 'flightNumbers');
+  setIfPresent('op-exposure', 'exposure');
+  setIfPresent('op-qci', 'qci');
+  setIfPresent('op-audit-findings', 'auditFindings');
   // incidentTrends is maintained via add/remove, not from a form field directly
 }
 
@@ -2317,6 +2368,7 @@ function saveStationFromForm() {
   renderIncidentTrendChart(currentStation);
   renderStationIcaoContext(currentStation);
   highlightAxisScores();
+  renderFormPillarD();
 }
 
 function updateRiskAlerts() {
@@ -2707,10 +2759,11 @@ function renderStationList() {
     : aggregationMode === 'smpri'
       ? `<th data-sort="name">Station</th>
        <th data-sort="iata">IATA</th>${riskHeaders}
-       <th data-sort="aScore">z<sub>A</sub></th>
-       <th data-sort="bMult">z<sub>B</sub></th>
-       <th data-sort="abComposite">z<sub>C</sub></th>
-       <th data-sort="cMult">z<sub>R</sub></th>
+      <th data-sort="aScore">z<sub>A</sub></th>
+      <th data-sort="bMult">z<sub>B</sub></th>
+      <th data-sort="abComposite">z<sub>C</sub></th>
+      <th>z<sub>D</sub></th>
+      <th data-sort="cMult">z<sub>R</sub></th>
        <th data-sort="finalScore">SMPRI Score</th>
        <th data-sort="tier">Tier</th>
        <th>Status</th>
@@ -2856,6 +2909,7 @@ function renderStationList() {
         <td style="font-size:0.8rem">${cs?.zA != null ? `<span style="display:inline-block;padding:1px 5px;border-radius:3px;font-weight:600;background:${Math.abs(cs.zA) >= 2 ? '#FEE2E2;color:#991B1B' : Math.abs(cs.zA) >= 1 ? '#FEF3C7;color:#92400E' : '#F0FDF4;color:#166534'}">${cs.zA > 0 ? '+' : ''}${cs.zA.toFixed(2)}</span>` : '—'}</td>
         <td style="font-size:0.8rem">${cs?.zB != null ? `<span style="display:inline-block;padding:1px 5px;border-radius:3px;font-weight:600;background:${Math.abs(cs.zB) >= 2 ? '#FEE2E2;color:#991B1B' : Math.abs(cs.zB) >= 1 ? '#FEF3C7;color:#92400E' : '#F0FDF4;color:#166534'}">${cs.zB > 0 ? '+' : ''}${cs.zB.toFixed(2)}</span>` : '—'}</td>
         <td style="font-size:0.8rem">${cs?.zC != null ? `<span style="display:inline-block;padding:1px 5px;border-radius:3px;font-weight:600;background:${Math.abs(cs.zC) >= 2 ? '#FEE2E2;color:#991B1B' : Math.abs(cs.zC) >= 1 ? '#FEF3C7;color:#92400E' : '#F0FDF4;color:#166534'}">${cs.zC > 0 ? '+' : ''}${cs.zC.toFixed(2)}</span>` : '—'}</td>
+        <td style="font-size:0.8rem">${cs?.zD != null && cs.dParts ? `<span style="display:inline-block;padding:1px 5px;border-radius:3px;font-weight:600;background:${Math.abs(cs.zD) >= 2 ? '#FEE2E2;color:#991B1B' : Math.abs(cs.zD) >= 1 ? '#FEF3C7;color:#92400E' : '#F0FDF4;color:#166534'}" title="${escHtml(_audTitle(cs.dParts))}">${cs.zD > 0 ? '+' : ''}${cs.zD.toFixed(2)}</span>` : '<span style="color:#9CA3AF" title="No audit data">·</span>'}</td>
         <td style="font-size:0.8rem">${cs?.zR != null ? `<span style="display:inline-block;padding:1px 5px;border-radius:3px;font-weight:600;background:${Math.abs(cs.zR) >= 2 ? '#FEE2E2;color:#991B1B' : Math.abs(cs.zR) >= 1 ? '#FEF3C7;color:#92400E' : '#F0FDF4;color:#166534'}">${cs.zR > 0 ? '+' : ''}${cs.zR.toFixed(2)}</span>` : '—'}</td>
       ` : `
         <td>${cs.aAvg !== null ? `<span class="score-pill">${cs.aAvg}</span>` : '<span class="score-na">—</span>'}</td>
@@ -3074,6 +3128,7 @@ function renderRankings() {
         <td class="score-td">${zCell(cs?.zA)}</td>
         <td class="score-td">${zCell(cs?.zB)}</td>
         <td class="score-td">${zCell(cs?.zC)}</td>
+        <td class="score-td">${zCell(cs?.zD)}</td>
         <td class="score-td">${zCell(cs?.zR)}</td>
         <td class="final-td">
           <div class="final-score-cell">
@@ -3165,7 +3220,7 @@ function renderRankings() {
     : aggregationMode === 'risk'
       ? `<tr><th>Rank</th><th>Station</th>${riskHeaders}<th>Risk/Hazard</th><th>Risk/Flight</th><th>Log H</th><th>Log F</th><th>P</th><th colspan="3">Weight / Global</th><th>Risk Score</th><th>Risk Tier</th><th>Parts</th></tr>`
     : aggregationMode === 'smpri'
-      ? `<tr><th>Rank</th><th>Station</th>${riskHeaders}<th>z<sub>A</sub></th><th>z<sub>B</sub></th><th>z<sub>C</sub></th><th>z<sub>R</sub></th><th>SMPRI Score</th><th>Risk Tier</th><th>Parts</th></tr>`
+      ? `<tr><th>Rank</th><th>Station</th>${riskHeaders}<th>z<sub>A</sub></th><th>z<sub>B</sub></th><th>z<sub>C</sub></th><th>z<sub>D</sub></th><th>z<sub>R</sub></th><th>SMPRI Score</th><th>Risk Tier</th><th>Parts</th></tr>`
     : aggregationMode === 'rpi'
       ? `<tr><th>Rank</th><th>Station</th>${riskHeaders}<th>A (term×w)</th><th>B (term×w)</th><th>A+B</th><th>C (term×w)</th><th>RPI Score</th><th>Risk Tier</th><th>Parts</th></tr>`
     : `<tr><th>Rank</th><th>Station</th>${riskHeaders}<th>A Score</th><th>B Mult</th><th>A × B</th><th>C Mult</th><th>Final Score</th><th>Risk Tier</th><th>Parts</th></tr>`;
@@ -4440,8 +4495,9 @@ function renderMapRiskMode(stations, regFilter) {
         ${aggregationMode === 'risk' && cs ? `<span style="font-size:0.75rem;color:#6b7280">Weight: ${cs.weightSum.toLocaleString()} ÷ ${cs.stationUniqueCount} occ ÷ ${cs.flightCount ? cs.flightCount.toLocaleString() + ' flights × 1,000' : cs.totalGlobal.toLocaleString() + ' global'}</span><br>` : ''}
         ${aggregationMode === 'smpri' && cs ? `<div style="margin-top:4px;padding:4px 6px;background:#F9FAFB;border-radius:4px;border:1px solid #E5E7EB;font-size:0.75rem;color:#374151">
           <div><strong>SMPRI = ${cs.smpri?.toFixed(3) ?? cs.finalScore?.toFixed(3) ?? '—'}</strong></div>
-          <div style="margin-top:2px">z<sub>A</sub>: ${cs.zA != null ? (cs.zA > 0 ? '+' : '') + cs.zA.toFixed(2) : '—'} · z<sub>B</sub>: ${cs.zB != null ? (cs.zB > 0 ? '+' : '') + cs.zB.toFixed(2) : '—'} · z<sub>C</sub>: ${cs.zC != null ? (cs.zC > 0 ? '+' : '') + cs.zC.toFixed(2) : '—'} · z<sub>R</sub>: ${cs.zR != null ? (cs.zR > 0 ? '+' : '') + cs.zR.toFixed(2) : '—'}</div>
-          <div style="margin-top:2px;font-size:0.7rem;color:#6b7280">Credibility-gated weights: A=${cs.smpriWeights?.a?.toFixed(3) ?? '—'} B=${cs.smpriWeights?.b?.toFixed(3) ?? '—'} C=${cs.smpriWeights?.c?.toFixed(3) ?? '—'} R=${cs.smpriWeights?.r?.toFixed(3) ?? '—'} (Z=${cs.credibility?.toFixed(3) ?? '—'})</div>
+          <div style="margin-top:2px">z<sub>A</sub>: ${cs.zA != null ? (cs.zA > 0 ? '+' : '') + cs.zA.toFixed(2) : '—'} · z<sub>B</sub>: ${cs.zB != null ? (cs.zB > 0 ? '+' : '') + cs.zB.toFixed(2) : '—'} · z<sub>C</sub>: ${cs.zC != null ? (cs.zC > 0 ? '+' : '') + cs.zC.toFixed(2) : '—'} · z<sub>D</sub>: ${cs.dParts ? (cs.zD > 0 ? '+' : '') + cs.zD.toFixed(2) : '—'} · z<sub>R</sub>: ${cs.zR != null ? (cs.zR > 0 ? '+' : '') + cs.zR.toFixed(2) : '—'}</div>
+          ${cs.dParts ? `<div style="margin-top:2px;font-size:0.7rem;color:#6b7280">Pillar D: L=${cs.dParts.L ?? '—'} · T=${cs.dParts.T ?? '—'} · P=${cs.dParts.P ?? '—'} · κ=${cs.dParts.kappa != null ? cs.dParts.kappa + '%' : '—'} · CAPs breached ${cs.dParts.capsBreached}/${cs.dParts.capsTotal}${cs.dParts.qciActive ? ` · QCI q=${cs.dParts.qstat}` : ''}</div>` : ''}
+          <div style="margin-top:2px;font-size:0.7rem;color:#6b7280">Credibility-gated weights: A=${cs.smpriWeights?.a?.toFixed(3) ?? '—'} B=${cs.smpriWeights?.b?.toFixed(3) ?? '—'} C=${cs.smpriWeights?.c?.toFixed(3) ?? '—'} D=${cs.smpriWeights?.d?.toFixed(3) ?? '—'} R=${cs.smpriWeights?.r?.toFixed(3) ?? '—'} (Z=${cs.credibility?.toFixed(3) ?? '—'})</div>
         </div><br>` : ''}
         Total Flights: <strong>${getFlightVolume(s)?.toLocaleString() || '—'}</strong><br>
         ${getPartBList(s).filter(b => b.status === 'complete').map(b =>
@@ -8472,6 +8528,8 @@ function updateHeaderFormula() {
       <span class="formula-op">+</span>
       <span class="formula-pill formula-c">w<sub>C</sub>·z<sub>C</sub></span>
       <span class="formula-op">+</span>
+      <span class="formula-pill formula-a">w<sub>D</sub>·z<sub>D</sub></span>
+      <span class="formula-op">+</span>
       <span class="formula-pill formula-final">w<sub>R</sub>·z<sub>R</sub></span>
       <span class="formula-op">=</span>
       <span class="formula-pill formula-final" style="font-size:0.7rem">(Z-scores, Empirical Bayes K)</span>`;
@@ -8716,6 +8774,7 @@ function renderSettings() {
   document.getElementById('settings-weight-a').value = rpi.weightA;
   document.getElementById('settings-weight-b').value = rpi.weightB;
   document.getElementById('settings-weight-c').value = rpi.weightC;
+  document.getElementById('settings-weight-d').value = rpi.weightD != null ? rpi.weightD : 0.20;
   document.getElementById('settings-weight-r').value = rpi.weightR;
 
   const container = document.getElementById('settings-regions');
@@ -8975,9 +9034,10 @@ function saveSettings() {
   // Save RPI settings
   saveRpiSettings({
     formula: document.getElementById('settings-rpi-formula').value,
-    weightA: parseFloat(document.getElementById('settings-weight-a').value) || 0.25,
-    weightB: parseFloat(document.getElementById('settings-weight-b').value) || 0.25,
-    weightC: parseFloat(document.getElementById('settings-weight-c').value) || 0.25,
+    weightA: parseFloat(document.getElementById('settings-weight-a').value) || 0.20,
+    weightB: parseFloat(document.getElementById('settings-weight-b').value) || 0.20,
+    weightC: parseFloat(document.getElementById('settings-weight-c').value) || 0.20,
+    weightD: parseFloat(document.getElementById('settings-weight-d').value) || 0.20,
     weightR: parseFloat(document.getElementById('settings-weight-r').value) || 0.25,
   });
   _riskScoreCache.clear();
@@ -9102,6 +9162,7 @@ function init() {
       if (tab.dataset.view === 'coverage') renderContractorCoverage();
       if (tab.dataset.view === 'import') { /* static UI, no render needed */ }
       if (tab.dataset.view === 'issues') { renderCrsMergedIssues(); }
+      if (tab.dataset.view === 'prediction') { renderPrediction(); }
       if (tab.dataset.view === 'settings') renderSettings();
       if (tab.dataset.view === 'form') {
         renderForm();
@@ -10663,4 +10724,968 @@ function _loadBigData(name, url, onload) {
     .then(() => _markDataFileDone());
 }
 
+// ── Near-Miss Prediction Experiment (OAPT → SAPT) ──────────────────────────
+
+// Atomic OAPT concern -> [SD parent, match tier]. Generated by compare_sd_vs_concerns.py.
+var _PRED_CONCERN_SD = {"AIRCRAFT DE-ICING": ["RAMP PROCEDURES", "exact-child"], "AVI - Improper Acceptance": ["CARGO AVI HANDLING", "alias"], "AVI Other": ["", "unmapped"], "Agent(s) Late or Not Available": ["ORGANIZATIONAL ISSUE", "alias"], "Agent(s) late/not available": ["ORGANIZATIONAL ISSUE", "alias"], "Aircraft Door - found on arrival": ["", "unmapped"], "Aircraft Door - found on departure": ["", "unmapped"], "Aircraft Servicing": ["RAMP PROCEDURES", "alias"], "Airport Authority Equipment": ["", "unmapped"], "Baggage Fees": ["CSA PROCEDURES", "alias"], "Boarding or Deplaning": ["CSA PROCEDURES", "exact-child"], "Bridge Operations": ["CSA PROCEDURES", "exact-child"], "COB Procedures": ["CSA PROCEDURES", "exact-child"], "CSA PROCEDURES": ["CSA PROCEDURES", "exact-parent"], "Communication": ["COMMUNICATION SYSTEMS", "alias"], "Damaged due to Handling": ["", "unmapped"], "Deceased": ["", "unmapped"], "Documentation - LIR/OIR non-safety": ["DOCUMENTATION or DATA or PROCESS", "alias"], "Equipment - non-safety": ["", "unmapped"], "Escape": ["", "unmapped"], "FACILITY": ["HAZARD IDENTIFICATION", "exact-child"], "Found on arrival - L1": ["LOADING INCIDENT", "alias"], "Found on departure - L1": ["LOADING INCIDENT", "alias"], "GPU Improper Use": ["RAMP PROCEDURES", "alias"], "GPU Not Available/Not Used": ["RAMP PROCEDURES", "alias"], "GPU Not Sufficient/Inoperable/No Fuel": ["RAMP PROCEDURES", "alias"], "Heavy Bag Violation": ["", "unmapped"], "Improper Loading/Handling - Baggage": ["LOADING INCIDENT", "alias"], "Improper Loading/Handling - Cargo": ["LOADING INCIDENT", "alias"], "Improper Loading/Handling-AVI": ["CARGO AVI HANDLING", "alias"], "Incorrect segregation - non-safety": ["DANGEROUS GOODS HANDLING", "alias"], "Insufficient Documentation - pax flew": ["DOCUMENTATION or DATA or PROCESS", "alias"], "Missing tags/labels": ["CSA PROCEDURES", "alias"], "Name Correction Missed - pax flew": ["DOCUMENTATION or DATA or PROCESS", "alias"], "OPERATIONAL OTHER": ["", "unmapped"], "Passenger Boarding Bridge (PBB)": ["CABIN EXIT RELATED", "alias"], "PCA/Aircraft Heater Improper Use": ["RAMP PROCEDURES", "alias"], "PCA/Aircraft Heater Not Available/Not Used": ["RAMP PROCEDURES", "alias"], "PCA/Aircraft Heater Not Sufficient/Inoperable/No Fuel": ["RAMP PROCEDURES", "alias"], "Pushback": ["RAMP PROCEDURES", "exact-child"], "Special Baggage": ["CSA PROCEDURES", "exact-child"], "Specials Manifest": ["CSA PROCEDURES", "exact-child"], "Tagging Errors": ["CSA PROCEDURES", "alias"], "Ticketing or Seating - Agent Error": ["CSA PROCEDURES", "alias"], "UMNR": ["CSA PROCEDURES", "alias"], "Wheelchair Handling": ["CSA PROCEDURES", "alias"]};
+
+let _predChart = null;
+let _predTrendChart = null;
+let _predReclassRows = null;
+let _predReclassPage = 0;
+let _predReclassFilter = '';
+let _predReclassCurrent = null;
+let _predDescModal = null;
+
+function _predDescModalHtml(r) {
+  return `
+    <div style="font-weight:700;font-size:0.7rem;margin-bottom:0.35rem">${escHtml(r.o)} &middot; ${escHtml(r.st)} &middot; ${escHtml(r.dt)}${r.src ? ` <span style="font-weight:400;color:var(--color-text-muted)">&middot; source report ${escHtml(r.src)}</span>` : ''}</div>
+    <div style="font-size:0.62rem;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.2rem">Original report</div>
+    <div style="white-space:pre-wrap">${escHtml(r.desc) || '<em>no description</em>'}</div>
+    <div style="border-top:1px solid rgba(0,0,0,0.08);margin-top:0.5rem;padding-top:0.45rem;font-size:0.66rem;color:var(--color-text-muted)">
+      <div><b style="color:var(--color-text)">Original classification:</b> ${escHtml(r.orig) || 'none'}</div>
+      <div><b style="color:var(--color-text)">SD reclassification:</b> ${escHtml(r.parent)}${r.child ? ' &rarr; ' + escHtml(r.child) : ''}</div>
+    </div>`;
+}
+
+function _predShowDescModal(html, x, y) {
+  if (!_predDescModal) {
+    _predDescModal = document.createElement('div');
+    _predDescModal.style.cssText =
+      'position:fixed;display:none;z-index:9999;max-width:480px;background:var(--color-bg,#fff);' +
+      'border:1px solid rgba(0,0,0,0.18);border-radius:8px;box-shadow:0 10px 28px rgba(0,0,0,0.22);' +
+      'padding:0.75rem 0.9rem;font-size:0.7rem;line-height:1.5;color:var(--color-text);pointer-events:none;';
+    document.body.appendChild(_predDescModal);
+  }
+  const el = _predDescModal;
+  el.innerHTML = html;
+  el.style.display = 'block';
+  const pad = 14;
+  let left = x + pad;
+  if (left + el.offsetWidth > window.innerWidth - 10) left = Math.max(10, x - el.offsetWidth - pad);
+  let top = y + pad;
+  if (top + el.offsetHeight > window.innerHeight - 10) top = Math.max(10, y - el.offsetHeight - pad);
+  el.style.left = `${left}px`;
+  el.style.top = `${top}px`;
+}
+
+function _predHideDescModal() {
+  if (_predDescModal) _predDescModal.style.display = 'none';
+}
+
+function _predMulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function _predRanks(xs) {
+  const order = xs.map((v, i) => [v, i]).sort((a, b) => a[0] - b[0]);
+  const rk = new Array(xs.length);
+  let i = 0;
+  while (i < order.length) {
+    let j = i;
+    while (j + 1 < order.length && order[j + 1][0] === order[i][0]) j++;
+    const avg = (i + j) / 2 + 1;
+    for (let k = i; k <= j; k++) rk[order[k][1]] = avg;
+    i = j + 1;
+  }
+  return rk;
+}
+
+function _predPearson(a, b) {
+  const n = a.length;
+  let ma = 0, mb = 0;
+  for (let i = 0; i < n; i++) { ma += a[i]; mb += b[i]; }
+  ma /= n; mb /= n;
+  let num = 0, da = 0, db = 0;
+  for (let i = 0; i < n; i++) {
+    const xa = a[i] - ma, xb = b[i] - mb;
+    num += xa * xb; da += xa * xa; db += xb * xb;
+  }
+  const den = Math.sqrt(da * db);
+  return den ? num / den : 0;
+}
+
+function _predSpearmanPerm(a, b, perms) {
+  const ra = _predRanks(a);
+  const rho = _predPearson(ra, _predRanks(b));
+  const rng = _predMulberry32(42);
+  const bb = b.slice();
+  let extreme = 0;
+  for (let p = 0; p < perms; p++) {
+    for (let i = bb.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      const tmp = bb[i]; bb[i] = bb[j]; bb[j] = tmp;
+    }
+    if (Math.abs(_predPearson(ra, _predRanks(bb))) >= Math.abs(rho) - 1e-9) extreme++;
+  }
+  return [rho, (extreme + 1) / (perms + 1)];
+}
+
+function _predOfficialSdParents(rec) {
+  return [...new Set((rec.ds || [])
+    .filter(x => x.d === 'Safety Descriptors' && x.l1)
+    .map(x => x.l1))];
+}
+
+function _predTrendSeries(parent) {
+  const buckets = {};
+  CRS_MERGED_REPORTS.forEach(r => {
+    const t = r.t || '';
+    const k = String(r.dt || '').substring(0, 7);
+    if (!k || !(t === 'OAPT' || t.startsWith('SAPT') || t.startsWith('E-SAPT'))) return;
+    const b = buckets[k] = buckets[k] || [0, 0, 0];
+    if (t === 'OAPT') {
+      let hitOrig = false;
+      if (parent) {
+        hitOrig = (r.n || []).some(raw =>
+          String(raw).split(',').some(part => (_PRED_CONCERN_SD[part.trim()] || [''])[0] === parent));
+      } else {
+        hitOrig = !!(r.n && r.n.length);
+      }
+      const hitSd = parent ? r.sp === parent : !!r.sp;
+      if (hitOrig) b[0]++;
+      if (hitSd) b[1]++;
+    } else {
+      const ps = _predOfficialSdParents(r);
+      if (parent ? ps.includes(parent) : ps.length) b[2]++;
+    }
+  });
+  const months = Object.keys(buckets).sort();
+  return {
+    months,
+    labels: months.map(k => {
+      const [y, m] = k.split('-').map(Number);
+      return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-US', { month: 'short', year: '2-digit', timeZone: 'UTC' });
+    }),
+    orig: months.map(k => buckets[k][0]),
+    sd: months.map(k => buckets[k][1]),
+    sapt: months.map(k => buckets[k][2]),
+  };
+}
+
+function _renderPredTrend(parent) {
+  const canvas = document.getElementById('pred-trend-chart');
+  if (!canvas || typeof CRS_MERGED_REPORTS === 'undefined') return;
+  if (_predTrendChart) { _predTrendChart.destroy(); _predTrendChart = null; }
+  const s = _predTrendSeries(parent);
+  if (!s.months.length || typeof Chart === 'undefined') return;
+  _predTrendChart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: s.labels,
+      datasets: [
+        {
+          label: parent ? `OAPT — original concerns → ${parent}` : 'OAPT — original concerns',
+          data: s.orig,
+          borderColor: '#F59E0B',
+          backgroundColor: 'rgba(245,158,11,0.12)',
+          tension: 0.25,
+          borderWidth: 2,
+        },
+        {
+          label: parent ? `OAPT — SD classifier → ${parent}` : 'OAPT — SD classifier',
+          data: s.sd,
+          borderColor: '#3B82F6',
+          backgroundColor: 'rgba(59,130,246,0.12)',
+          tension: 0.25,
+          borderWidth: 2,
+        },
+        {
+          label: parent ? `SAPT events → ${parent}` : 'SAPT events (official SD)',
+          data: s.sapt,
+          borderColor: '#DC2626',
+          backgroundColor: 'rgba(220,38,38,0.10)',
+          tension: 0.25,
+          borderWidth: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { boxWidth: 14, font: { size: 10 } } } },
+      scales: {
+        x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { font: { size: 9 } } },
+        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { precision: 0 } },
+      },
+    },
+  });
+}
+
+function _predBuildReclassRows() {
+  const PREFIX_RE = /^Description from Report\s+\S+\s*-\s*/i;
+  const rows = [];
+  CRS_MERGED_REPORTS.forEach(r => {
+    if ((r.t || '') !== 'OAPT' || !r.sp || !r.n || !r.n.length) return;
+    const mapped = new Set();
+    const concerns = [];
+    (r.n || []).forEach(raw => String(raw).split(',').forEach(part => {
+      const c = part.trim();
+      if (!c) return;
+      concerns.push(c);
+      mapped.add((_PRED_CONCERN_SD[c] || [''])[0]);
+    }));
+    const full = r.rd || '';
+    rows.push({
+      o: r.o || '',
+      st: r.c || '',
+      dt: String(r.dt || '').substring(0, 10),
+      src: (full.match(/^Description from Report\s+(\S+)\s*-/i) || [])[1] || '',
+      desc: full.replace(PREFIX_RE, ''),
+      orig: [...new Set(concerns)].join(' · '),
+      parent: r.sp,
+      child: r.sc || '',
+      agree: mapped.has(r.sp),
+      unmapped: mapped.size === 1 && [...mapped][0] === '' ? true : ![...mapped].some(Boolean),
+    });
+  });
+  rows.sort((a, b) => b.dt.localeCompare(a.dt));
+  return rows;
+}
+
+function _renderPredReclass() {
+  const container = document.getElementById('pred-reclass-table');
+  if (!container || typeof CRS_MERGED_REPORTS === 'undefined') return;
+  if (!_predReclassRows) _predReclassRows = _predBuildReclassRows();
+
+  const filtered = _predReclassFilter === 'match'
+    ? _predReclassRows.filter(r => r.agree)
+    : _predReclassFilter === 'differs'
+      ? _predReclassRows.filter(r => !r.agree)
+      : _predReclassRows;
+
+  const perPage = 20;
+  const pages = Math.max(1, Math.ceil(filtered.length / perPage));
+  if (_predReclassPage >= pages) _predReclassPage = pages - 1;
+  const slice = filtered.slice(_predReclassPage * perPage, (_predReclassPage + 1) * perPage);
+
+  const badge = r => {
+    if (r.unmapped) return '<span style="background:#94A3B8;color:#fff;padding:1px 7px;border-radius:4px;font-size:0.65rem">UNMAPPED</span>';
+    return r.agree
+      ? '<span style="background:#16A34A;color:#fff;padding:1px 7px;border-radius:4px;font-size:0.65rem">MATCH</span>'
+      : '<span style="background:#DC2626;color:#fff;padding:1px 7px;border-radius:4px;font-size:0.65rem">DIFFERS</span>';
+  };
+  _predReclassCurrent = slice;
+  _predHideDescModal();
+
+  container.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:0.7rem">
+      <thead><tr style="border-bottom:1px solid rgba(0,0,0,0.12);color:var(--color-text-muted);text-align:left">
+        <th style="padding:3px 8px">Occ #</th>
+        <th style="padding:3px 8px">Stn</th>
+        <th style="padding:3px 8px">Date</th>
+        <th style="padding:3px 8px">Original report description <span style="font-weight:400">(hover for full text)</span></th>
+        <th style="padding:3px 8px">Original classification (concerns)</th>
+        <th style="padding:3px 8px">SD reclassification</th>
+        <th style="padding:3px 8px;text-align:center">Verdict</th>
+      </tr></thead><tbody>
+      ${slice.map((r, i) => `<tr style="border-bottom:1px solid rgba(0,0,0,0.05)">
+        <td style="padding:4px 8px;white-space:nowrap">${escHtml(r.o)}</td>
+        <td style="padding:4px 8px">${escHtml(r.st)}</td>
+        <td style="padding:4px 8px;white-space:nowrap">${escHtml(r.dt)}</td>
+        <td style="padding:4px 8px;max-width:420px"><span class="pred-reclass-desc" data-i="${i}" style="cursor:help;text-decoration:underline dotted rgba(0,0,0,0.35)">${escHtml(r.desc.slice(0, 180))}${r.desc.length > 180 ? '&hellip;' : ''}</span></td>
+        <td style="padding:4px 8px;max-width:200px">${escHtml(r.orig) || '<em style="color:var(--color-text-muted)">none</em>'}</td>
+        <td style="padding:4px 8px;white-space:nowrap"><b>${escHtml(r.parent)}</b>${r.child ? ` <span style="color:var(--color-text-muted)">&rarr; ${escHtml(r.child)}</span>` : ''}</td>
+        <td style="padding:4px 8px;text-align:center">${badge(r)}</td>
+      </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  if (!container.dataset.modalWired) {
+    container.dataset.modalWired = '1';
+    container.addEventListener('mouseover', e => {
+      const cell = e.target.closest('.pred-reclass-desc');
+      if (!cell || !_predReclassCurrent) return;
+      const row = _predReclassCurrent[Number(cell.dataset.i)];
+      if (row) _predShowDescModal(_predDescModalHtml(row), e.clientX, e.clientY);
+    });
+    container.addEventListener('mouseout', e => {
+      if (e.target.closest('.pred-reclass-desc')) _predHideDescModal();
+    });
+  }
+
+  const info = document.getElementById('pred-reclass-info');
+  if (info) info.textContent =
+    `${filtered.length.toLocaleString()} comparable reports · page ${_predReclassPage + 1} of ${pages}`;
+  const prev = document.getElementById('pred-reclass-prev');
+  const next = document.getElementById('pred-reclass-next');
+  if (prev) prev.disabled = _predReclassPage <= 0;
+  if (next) next.disabled = _predReclassPage >= pages - 1;
+}
+
+function renderPrediction() {
+  if (typeof CRS_MERGED_REPORTS === 'undefined') return;
+
+  const nmByStation = {};
+  const evByStation = {};
+  CRS_MERGED_REPORTS.forEach(r => {
+    const st = r.c, mo = r.dt;
+    if (!st) return;
+    const t = r.t || '';
+    if (t === 'OAPT') {
+      if (!r.sp) return;
+      (nmByStation[st] = nmByStation[st] || {})[r.sp] = (nmByStation[st][r.sp] || 0) + 1;
+    } else if (t.startsWith('SAPT') || t.startsWith('E-SAPT')) {
+      const ps = _predOfficialSdParents(r);
+      if (!ps.length) return;
+      const bucket = evByStation[st] = evByStation[st] || {};
+      ps.forEach(p => { bucket[p] = (bucket[p] || 0) + 1; });
+    }
+  });
+
+  const stations = Object.keys(nmByStation).filter(s => evByStation[s]).sort();
+  if (!stations.length) return;
+
+  const parents = new Set();
+  stations.forEach(s => {
+    Object.keys(nmByStation[s]).forEach(p => parents.add(p));
+    Object.keys(evByStation[s]).forEach(p => parents.add(p));
+  });
+
+  const vec = (map, parent) => stations.map(s => (map[s][parent] || 0));
+  const shareVec = (map, parent) => {
+    const tot = stations.map(s => Object.values(map[s]).reduce((a, b) => a + b, 0) || 1);
+    return stations.map((s, i) => (map[s][parent] || 0) / tot[i]);
+  };
+  const totalOf = map => stations.map(s => Object.values(map[s]).reduce((a, b) => a + b, 0));
+
+  const tested = [...parents].filter(p =>
+    vec(nmByStation, p).reduce((a, b) => a + b, 0) >= 5 &&
+    vec(evByStation, p).reduce((a, b) => a + b, 0) >= 5);
+
+  const results = {};
+  tested.forEach(p => {
+    const [rho, pv] = _predSpearmanPerm(vec(nmByStation, p), vec(evByStation, p), 2000);
+    const [rhoS, pvS] = _predSpearmanPerm(shareVec(nmByStation, p), shareVec(evByStation, p), 2000);
+    results[p] = { rho, pv, rhoS, pvS,
+      nO: vec(nmByStation, p).reduce((a, b) => a + b, 0),
+      nE: vec(evByStation, p).reduce((a, b) => a + b, 0) };
+  });
+
+  const bg = [];
+  for (let i = 0; i < tested.length; i++) {
+    for (let j = i + 1; j < tested.length; j++) {
+      const [rBg] = _predSpearmanPerm(vec(nmByStation, tested[i]), vec(evByStation, tested[j]), 600);
+      bg.push(rBg);
+    }
+  }
+  bg.sort((a, b) => a - b);
+  const bgMed = bg.length ? bg[Math.floor(bg.length / 2)] : 0;
+
+  const [refRho, refPv] = _predSpearmanPerm(totalOf(nmByStation), totalOf(evByStation), 2000);
+
+  // Summary cards
+  const nmTot = totalOf(nmByStation).reduce((a, b) => a + b, 0);
+  const evTot = totalOf(evByStation).reduce((a, b) => a + b, 0);
+  const card = (label, value, sub) => `
+    <div style="flex:1;min-width:170px;background:var(--color-bg-alt,#f8fafc);border-radius:8px;padding:0.6rem 0.9rem">
+      <div style="font-size:0.68rem;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.04em">${escHtml(label)}</div>
+      <div style="font-size:1.25rem;font-weight:700;color:var(--color-text)">${escHtml(value)}</div>
+      <div style="font-size:0.68rem;color:var(--color-text-muted)">${sub}</div>
+    </div>`;
+  document.getElementById('pred-summary').innerHTML =
+    card('OAPT classified', nmTot.toLocaleString(), 'keyword SD classifier (near-miss proxy)') +
+    card('SAPT events classified', evTot.toLocaleString(), 'official TapRooT SD labels') +
+    card('Stations in panel', String(stations.length), 'report both sides') +
+    card('Pooled reference rho', `${refRho >= 0 ? '+' : ''}${refRho.toFixed(2)}`,
+      `all descriptors combined · p=${refPv.toFixed(3)} (station-size effect)`);
+
+  // Main results table
+  const chip = (rhoS, pvS) => {
+    if (rhoS >= 0.2 && pvS < 0.05) return '<span style="background:#16A34A;color:#fff;padding:1px 7px;border-radius:4px;font-size:0.65rem">REAL SIGNAL</span>';
+    if (rhoS > -0.15 && rhoS < 0.2) return '<span style="background:#94A3B8;color:#fff;padding:1px 7px;border-radius:4px;font-size:0.65rem">STATION SIZE</span>';
+    return '<span style="background:#DC2626;color:#fff;padding:1px 7px;border-radius:4px;font-size:0.65rem">INVERSE</span>';
+  };
+  const rows = tested
+    .slice()
+    .sort((a, b) => results[b].rho - results[a].rho)
+    .map(p => {
+      const r = results[p];
+      const verdict = r.rho > bgMed + 0.15 ? 'ABOVE background'
+        : r.rho > bgMed - 0.15 ? 'at background' : 'below';
+      return `<tr>
+        <td style="padding:3px 8px">${escHtml(p)}</td>
+        <td style="padding:3px 8px;text-align:right">${r.nO}</td>
+        <td style="padding:3px 8px;text-align:right">${r.nE}</td>
+        <td style="padding:3px 8px;text-align:right;font-weight:600">${r.rho >= 0 ? '+' : ''}${r.rho.toFixed(2)}</td>
+        <td style="padding:3px 8px;text-align:right">${r.pv.toFixed(3)}</td>
+        <td style="padding:3px 8px;text-align:right">${r.rhoS >= 0 ? '+' : ''}${r.rhoS.toFixed(2)}</td>
+        <td style="padding:3px 8px;text-align:right">${r.pvS.toFixed(3)}</td>
+        <td style="padding:3px 8px;text-align:center">${chip(r.rhoS, r.pvS)}</td>
+        <td style="padding:3px 8px;font-size:0.65rem;color:var(--color-text-muted);text-align:left">${verdict}</td>
+      </tr>`;
+    }).join('');
+  document.getElementById('pred-table').innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:0.7rem">
+      <thead><tr style="border-bottom:1px solid rgba(0,0,0,0.12);color:var(--color-text-muted)">
+        <th style="text-align:left;padding:3px 8px">Descriptor</th>
+        <th style="text-align:right;padding:3px 8px">OAPT</th>
+        <th style="text-align:right;padding:3px 8px">SAPT</th>
+        <th style="text-align:right;padding:3px 8px">rho</th>
+        <th style="text-align:right;padding:3px 8px">p</th>
+        <th style="text-align:right;padding:3px 8px">share&nbsp;rho</th>
+        <th style="text-align:right;padding:3px 8px">p</th>
+        <th style="text-align:center;padding:3px 8px">Verdict</th>
+        <th style="text-align:left;padding:3px 8px"></th>
+      </tr></thead><tbody>${rows}</tbody>
+    </table>
+    <p style="font-size:0.66rem;color:var(--color-text-muted);margin:0.5rem 0 0">
+      Off-diagonal background median rho: ${bgMed >= 0 ? '+' : ''}${bgMed.toFixed(2)}.
+      &ldquo;STATION SIZE&rdquo; = raw correlation explained by overall reporting volume.
+    </p>`;
+
+  // Cross-descriptor candidates
+  const crossPairs = [];
+  for (const pa of tested) {
+    for (const pb of tested) {
+      if (pa === pb) continue;
+      const [rx] = _predSpearmanPerm(vec(nmByStation, pa), vec(evByStation, pb), 600);
+      crossPairs.push([Math.abs(rx), rx, pa, pb]);
+    }
+  }
+  crossPairs.sort((a, b) => b[0] - a[0]);
+  const seen = new Set();
+  const crossRows = [];
+  for (const [, rx, pa, pb] of crossPairs) {
+    const key = pa + '|' + pb;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    crossRows.push(`<tr>
+      <td style="padding:3px 8px">${escHtml(pa)}</td>
+      <td style="padding:3px 8px">${escHtml(pb)}</td>
+      <td style="padding:3px 8px;text-align:right;font-weight:600">${rx >= 0 ? '+' : ''}${rx.toFixed(2)}</td>
+    </tr>`);
+    if (crossRows.length >= 10) break;
+  }
+  document.getElementById('pred-cross').innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:0.7rem">
+      <thead><tr style="border-bottom:1px solid rgba(0,0,0,0.12);color:var(--color-text-muted)">
+        <th style="text-align:left;padding:3px 8px">OAPT descriptor (near miss)</th>
+        <th style="text-align:left;padding:3px 8px">SAPT descriptor (event)</th>
+        <th style="text-align:right;padding:3px 8px">rho</th>
+      </tr></thead><tbody>${crossRows.join('')}</tbody>
+    </table>`;
+
+  // Verdict
+  const real = tested.filter(p => results[p].rhoS >= 0.2 && results[p].pvS < 0.05)
+    .sort((a, b) => results[b].rhoS - results[a].rhoS);
+  const sizeOnly = tested.filter(p => !(results[p].rhoS >= 0.2 && results[p].pvS < 0.05) && results[p].rho > bgMed - 0.15);
+  const li = (icon, text) => `<div style="display:flex;gap:0.45rem;margin-bottom:0.45rem"><span>${icon}</span><span>${text}</span></div>`;
+  document.getElementById('pred-verdict').innerHTML =
+    li(real.length ? '&#9989;' : '&#10060;',
+       real.length
+         ? `<b>Added value confirmed for:</b> ${real.map(p => escHtml(p)).join(', ')}. Same-descriptor near-misses predict events even after removing station-size effects.`
+         : '<b>No descriptor shows volume-independent predictive signal.</b>') +
+    li('&#128202;',
+       `Raw correlations for ${sizeOnly.slice(0, 3).map(p => escHtml(p)).join(', ') || 'most descriptors'} largely reflect station reporting volume rather than descriptor-specific risk transfer.`) +
+    li('&#9888;&#65039;',
+       `Cross-descriptor structure is generic: nearly every ground-ops near-miss type peaks against GROUND EQUIPMENT DAMAGE events — general ground friction, not one-to-one transfer.`) +
+    li('&#128161;',
+       `Caveats: only ~30% of OAPT reports classify (recall gaps attenuate rho); 8-month window; permutation p-values are exact but multiple comparisons not corrected.`);
+
+  // Scatter chart
+  const sel = document.getElementById('pred-descriptor');
+  const opts = '<option value="">All descriptors</option>' +
+    tested.slice().sort((a, b) => results[b].rho - results[a].rho)
+      .map(p => `<option value="${escHtml(p)}">${escHtml(p)}</option>`).join('');
+  sel.innerHTML = opts;
+  if (!sel.dataset.wired) {
+    sel.dataset.wired = '1';
+    sel.addEventListener('change', () => {
+      _renderPredScatter(nmByStation, evByStation, stations, results);
+      _renderPredTrend(sel.value);
+    });
+  }
+  _renderPredScatter(nmByStation, evByStation, stations, results);
+  _renderPredTrend('');
+
+  const rf = document.getElementById('pred-reclass-filter');
+  if (rf && !rf.dataset.wired) {
+    rf.dataset.wired = '1';
+    rf.addEventListener('change', () => {
+      _predReclassFilter = rf.value;
+      _predReclassPage = 0;
+      _renderPredReclass();
+    });
+  }
+  const rp = document.getElementById('pred-reclass-prev');
+  if (rp && !rp.dataset.wired) {
+    rp.dataset.wired = '1';
+    rp.addEventListener('click', () => {
+      if (_predReclassPage > 0) { _predReclassPage--; _renderPredReclass(); }
+    });
+  }
+  const rn = document.getElementById('pred-reclass-next');
+  if (rn && !rn.dataset.wired) {
+    rn.dataset.wired = '1';
+    rn.addEventListener('click', () => {
+      _predReclassPage++;
+      _renderPredReclass();
+    });
+  }
+  _renderPredReclass();
+}
+
+function _renderPredScatter(nmByStation, evByStation, stations, results) {
+  const sel = document.getElementById('pred-descriptor');
+  const canvas = document.getElementById('pred-scatter-chart');
+  const note = document.getElementById('pred-scatter-note');
+  if (!canvas || !sel) return;
+  let parent = sel.value;
+  if (!parent) {
+    for (const o of sel.options) { if (o.value) { parent = o.value; break; } }
+  }
+  if (!parent) return;
+  if (_predChart) { _predChart.destroy(); _predChart = null; }
+
+  const points = [];
+  stations.forEach(st => {
+    const x = nmByStation[st][parent] || 0;
+    const y = evByStation[st][parent] || 0;
+    if (x || y) points.push({ x, y, st });
+  });
+  points.sort((a, b) => (a.x + a.y) - (b.x + b.y));
+
+  note.textContent = `${points.length} stations with activity · each point = one station ` +
+    `(x: OAPT near misses, y: SAPT events)`;
+
+  if (typeof Chart === 'undefined' || !points.length) return;
+  const r = results[parent];
+  _predChart = new Chart(canvas.getContext('2d'), {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        data: points,
+        backgroundColor: 'rgba(59,130,246,0.65)',
+        borderColor: '#2563EB',
+        pointRadius: 5,
+        borderWidth: 1,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.raw.st}: OAPT=${ctx.raw.x}, SAPT=${ctx.raw.y}`,
+          },
+        },
+        title: {
+          display: true,
+          text: `${parent} — rho=${r.rho >= 0 ? '+' : ''}${r.rho.toFixed(2)} (p=${r.pv.toFixed(3)}) · share-adj=${r.rhoS >= 0 ? '+' : ''}${r.rhoS.toFixed(2)} (p=${r.pvS.toFixed(3)})`,
+          font: { size: 11 },
+          color: '#334155',
+        },
+      },
+      scales: {
+        x: { title: { display: true, text: 'OAPT near misses', font: { size: 10 } }, beginAtZero: true, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { precision: 0 } },
+        y: { title: { display: true, text: 'SAPT events', font: { size: 10 } }, beginAtZero: true, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { precision: 0 } },
+      },
+    },
+  });
+}
+
 document.addEventListener('DOMContentLoaded', init);
+
+// ─── Pillar D UI: station panel + network blocks (in Station Input view) ─────
+
+function _audZColor(val) {
+  const a = Math.abs(val);
+  return a >= 2 ? '#FEE2E2;color:#991B1B' : a >= 1 ? '#FEF3C7;color:#92400E' : '#F0FDF4;color:#166534';
+}
+
+function _audMarkChip(mark) {
+  const m = AuditPillar.MARKS[mark] || { label: mark };
+  const colors = { MF: '#FEE2E2;color:#991B1B', F: '#FFEDD5;color:#9A3412', OBS: '#FEF9C3;color:#854D0E', COMP: '#DCFCE7;color:#166534' };
+  return `<span style="display:inline-block;padding:1px 6px;border-radius:10px;font-size:0.68rem;font-weight:600;background:${colors[mark] || '#E5E7EB;color:#374151'}">${escHtml(m.label)}</span>`;
+}
+
+function _audStatusChip(f) {
+  const s = AuditPillar.findingStatus(f);
+  const colors = {
+    'Open': '#FEE2E2;color:#991B1B', 'Reopened': '#FEE2E2;color:#991B1B',
+    'CAP Received': '#FEF3C7;color:#92400E', 'Closed': '#DBEAFE;color:#1E40AF',
+    'Verified': '#DCFCE7;color:#166534'
+  };
+  const breached = AuditPillar.capBreached(f) ? ' <span title="SLA or action due date breached" style="font-weight:700">⚠</span>' : '';
+  return `<span style="display:inline-block;padding:1px 6px;border-radius:10px;font-size:0.68rem;font-weight:600;background:${colors[s] || '#E5E7EB;color:#374151'}">${s}</span>${breached}`;
+}
+
+function refreshAllViews() {
+  try {
+    renderDashboard();
+    renderStationList();
+    renderRankings();
+  } catch (_) {}
+}
+
+// ── station form binding ────────────────────────────────────────────────────
+
+function _fdStationIata() {
+  const el = document.getElementById('station-iata');
+  const v = (el?.value || '').trim().toUpperCase();
+  return v.length === 3 ? v : null;
+}
+
+let _pillarDInitialized = false;
+function _pillarDInitOnce() {
+  if (_pillarDInitialized) return;
+  _pillarDInitialized = true;
+
+  document.getElementById('fd-date').value = AuditPillar.todayIso();
+  _fdAddFindingRow();
+
+  document.getElementById('fd-add-finding').addEventListener('click', () => _fdAddFindingRow());
+  document.getElementById('fd-save').addEventListener('click', _fdSaveAudit);
+  document.getElementById('station-iata').addEventListener('input', renderFormPillarD);
+
+  // Network blocks (formerly the standalone Audits tab)
+  const stations = Object.keys(loadData().stations || {}).sort();
+  document.getElementById('aud-reg-station').innerHTML +=
+    stations.map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('');
+  const endInput = document.getElementById('aud-enddate');
+  endInput.value = AuditPillar.todayIso();
+  endInput.addEventListener('change', _renderAudNet);
+  document.getElementById('aud-reg-station').addEventListener('change', _renderAudNet);
+  document.getElementById('aud-reg-status').addEventListener('change', _renderAudNet);
+
+  ['fd-register', 'aud-register'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('click', _handleAuditRegisterEvent);
+    el.addEventListener('change', _handleAuditRegisterEvent);
+  });
+
+  document.getElementById('aud-export').addEventListener('click', () => {
+    const blob = new Blob([AuditPillar.exportJSON()], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `audit_pillar_data_${AuditPillar.todayIso()}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  document.getElementById('aud-import-file').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        AuditPillar.importJSON(reader.result);
+        document.getElementById('aud-data-status').textContent = 'Import successful.';
+        _refreshPillarDUi();
+        refreshAllViews();
+      } catch (err) {
+        alert('Import failed: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  document.getElementById('aud-clear').addEventListener('click', () => {
+    if (!confirm('Delete ALL audit, finding and event records? This cannot be undone.')) return;
+    AuditPillar.setData({ audits: [], findings: [], events: [], seq: 0 });
+    _refreshPillarDUi();
+    refreshAllViews();
+  });
+}
+
+function _handleAuditRegisterEvent(e) {
+  if (e.type === 'click') {
+    const actBtn = e.target.closest('.aud-act');
+    if (actBtn) {
+      const fid = actBtn.dataset.fid;
+      const today = AuditPillar.todayIso();
+      const act = actBtn.dataset.act;
+      if (act === 'cap') AuditPillar.addEvent(fid, 'CAP_RECEIVED'), AuditPillar.setFindingFields(fid, { capSubmittedAt: today });
+      if (act === 'close') AuditPillar.addEvent(fid, 'CLOSED'), AuditPillar.setFindingFields(fid, { closedAt: today });
+      if (act === 'verify') AuditPillar.addEvent(fid, 'EFFECTIVENESS_VERIFIED'), AuditPillar.setFindingFields(fid, { effVerifiedAt: today });
+      if (act === 'reopen') AuditPillar.markReopened(fid), AuditPillar.setFindingFields(fid, { closedAt: null, effVerifiedAt: null });
+      _refreshPillarDUi();
+      refreshAllViews();
+      return;
+    }
+    const delBtn = e.target.closest('.aud-del-audit');
+    if (delBtn && confirm('Delete this audit and all its findings?')) {
+      AuditPillar.deleteAudit(delBtn.dataset.id);
+      _refreshPillarDUi();
+      refreshAllViews();
+    }
+    return;
+  }
+  // change events
+  const input = e.target.closest('input[type="date"][data-fid]');
+  if (!input) return;
+  AuditPillar.setFindingFields(input.dataset.fid, { [input.dataset.field]: input.value || null });
+  _refreshPillarDUi();
+  refreshAllViews();
+}
+
+function _refreshPillarDUi() {
+  const iata = _fdStationIata();
+  if (iata) {
+    _fdRenderScorecard(iata);
+    _fdRenderRegister(iata);
+  }
+  _renderAudNet();
+}
+
+function _renderAudNet() {
+  const data = AuditPillar.load();
+  document.getElementById('aud-data-status').textContent =
+    `${data.audits.length} audits · ${data.findings.length} findings · ${data.events.length} events`;
+  const endInput = document.getElementById('aud-enddate');
+  if (!endInput.value) endInput.value = AuditPillar.todayIso();
+  _audRenderScorecard(endInput.value);
+  _audRenderRegister();
+}
+
+function _fdAddFindingRow() {
+  const wrap = document.getElementById('fd-findings-rows');
+  const row = document.createElement('div');
+  row.className = 'fd-finding-row';
+  row.style.cssText = 'display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.35rem;align-items:center';
+  const markOpts = Object.entries(AuditPillar.MARKS)
+    .map(([k, v]) => `<option value="${k}">${escHtml(v.label)}</option>`).join('');
+  const rcOpts = ['<option value="">— root cause —</option>']
+    .concat(AuditPillar.ROOT_CAUSES.map(rc => `<option value="${escHtml(rc)}">${escHtml(rc)}</option>`)).join('');
+  row.innerHTML = `
+    <input type="text" class="fdr-ref" placeholder="Ref e.g. BW 7.14" style="width:110px;font-size:0.72rem;padding:3px 6px">
+    <input type="text" class="fdr-title" placeholder="Finding / audit question" style="flex:1;min-width:160px;font-size:0.72rem;padding:3px 6px">
+    <select class="fdr-mark" style="font-size:0.72rem;padding:3px">${markOpts}</select>
+    <select class="fdr-rc" style="font-size:0.72rem;padding:3px;max-width:180px">${rcOpts}</select>
+    <button type="button" class="btn btn-sm btn-danger fdr-del" style="padding:2px 8px;min-width:auto">×</button>`;
+  row.querySelector('.fdr-del').addEventListener('click', () => row.remove());
+  wrap.appendChild(row);
+}
+
+function _fdSaveAudit() {
+  const statusEl = document.getElementById('fd-save-status');
+  const iata = _fdStationIata();
+  if (!iata) {
+    statusEl.textContent = 'Enter a valid 3-letter IATA code first.';
+    statusEl.style.color = '#DC2626';
+    return;
+  }
+  const date = document.getElementById('fd-date').value;
+  if (!date) {
+    statusEl.textContent = 'Audit date is required.';
+    statusEl.style.color = '#DC2626';
+    return;
+  }
+  const findings = [];
+  document.querySelectorAll('#fd-findings-rows .fd-finding-row').forEach(row => {
+    const ref = row.querySelector('.fdr-ref').value.trim();
+    const title = row.querySelector('.fdr-title').value.trim();
+    const mark = row.querySelector('.fdr-mark').value;
+    const rc = row.querySelector('.fdr-rc').value;
+    if (ref || title || mark !== 'COMP') findings.push({ ref, title, mark, rcCategory: rc });
+  });
+  AuditPillar.addAudit({
+    station: iata,
+    type: document.getElementById('fd-type').value,
+    date,
+    auditor: document.getElementById('fd-auditor').value,
+    itemsApplicable: document.getElementById('fd-items-app').value,
+    itemsObserved: document.getElementById('fd-items-obs').value,
+    itemsCompliant: document.getElementById('fd-items-comp').value,
+    findings
+  });
+  statusEl.textContent = `Saved for ${iata}. CAP SLA due ${AuditPillar.slaDueDate(date)} on CAP-bearing findings.`;
+  statusEl.style.color = '#16A34A';
+  document.getElementById('fd-findings-rows').innerHTML = '';
+  _fdAddFindingRow();
+  _refreshPillarDUi();
+  refreshAllViews();
+}
+
+function _fdRenderScorecard(iata) {
+  const res = AuditPillar.computeStats(AuditPillar.todayIso());
+  const r = res.stations.find(s => s.station === iata);
+  const el = document.getElementById('fd-scorecard');
+  if (!r) {
+    el.innerHTML = `<p class="field-hint" style="margin:0">No audits logged yet for ${escHtml(iata)}.</p>`;
+    return;
+  }
+  const fmt = (v, d) => v == null ? '<span style="color:#9CA3AF">—</span>' : (+v).toFixed(d);
+  el.innerHTML = `
+    <label>Pillar D scorecard — rolling 12 months</label>
+    <table style="width:100%;border-collapse:collapse;font-size:0.72rem;margin-top:0.4rem">
+      <tbody>
+        <tr>
+          <td style="padding:3px 6px"><strong>Items observed</strong></td><td style="padding:3px 6px">${r.observed}${r.qaActive ? '' : ` <span title="below ${AuditPillar.PARAMS.ACTIVATION_FLOOR_OBSERVED} — stream inactive" style="color:#D97706">⚠</span>`}</td>
+          <td style="padding:3px 6px"><strong>κ compliance</strong></td><td style="padding:3px 6px">${fmt(r.kappa != null ? r.kappa * 100 : null, 1)}%</td>
+          <td style="padding:3px 6px"><strong>Audits QA/QCI</strong></td><td style="padding:3px 6px">${r.nAudits}/${r.nQciAudits}</td>
+          <td style="padding:3px 6px"><strong>Findings</strong></td><td style="padding:3px 6px">${r.nFindings}</td>
+        </tr>
+        <tr>
+          <td style="padding:3px 6px"><strong>L load</strong></td><td style="padding:3px 6px">${fmt(r.L, 3)}</td>
+          <td style="padding:3px 6px"><strong>T timeliness</strong></td><td style="padding:3px 6px">${fmt(r.T, 2)}</td>
+          <td style="padding:3px 6px"><strong>P recurrence</strong></td><td style="padding:3px 6px">${fmt(r.P, 2)}</td>
+          <td style="padding:3px 6px"><strong>D statistic</strong></td>
+          <td style="padding:3px 6px">${r.D != null ? `<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-weight:700;background:${_audZColor(r.D)}">${r.D > 0 ? '+' : ''}${r.D.toFixed(2)}</span>` : '<span style="color:#9CA3AF">inactive</span>'}</td>
+        </tr>
+      </tbody>
+    </table>`;
+}
+
+function _fdRenderRegister(iata) {
+  const data = AuditPillar.load();
+  const audits = data.audits.filter(a => a.station === iata)
+    .slice().sort((a, b) => b.date.localeCompare(a.date));
+  const el = document.getElementById('fd-register');
+  if (!audits.length) {
+    el.innerHTML = `<p class="field-hint" style="margin:0.3rem 0 0">No audits recorded for ${escHtml(iata)} yet.</p>`;
+    return;
+  }
+  const body = audits.map(a =>
+    _auditBlockHtml(a, data.findings.filter(f => f.auditId === a.id), false)).join('');
+  el.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:0.72rem;margin-top:0.4rem">
+      <thead><tr style="text-align:left;border-bottom:1px solid var(--color-border,#E5E7EB)">
+        <th style="padding:3px 6px">Checklist item</th><th style="padding:3px 6px">Mark</th><th style="padding:3px 6px">Status</th>
+        <th style="padding:3px 6px">CAP lifecycle</th><th style="padding:3px 6px">Closure &amp; effectiveness</th><th style="padding:3px 6px">Quick actions</th>
+      </tr></thead>
+      <tbody>${body}</tbody>
+    </table>`;
+}
+
+// ── network-wide blocks ─────────────────────────────────────────────────────
+
+// Renders one audit: header row + its (already filtered) finding rows
+function _auditBlockHtml(a, findings, showStation) {
+  const slaDue = AuditPillar.slaDueDate(a.date);
+  const frows = findings.map(f => {
+    const due = AuditPillar.slaDueDate(f.auditDate);
+    const late = !f.capSubmittedAt && !f.closedAt && AuditPillar.todayIso() > due;
+    return `
+      <tr style="border-top:1px dashed var(--color-border,#E5E7EB)">
+        <td style="padding:3px 6px"><strong>${escHtml(f.ref || '—')}</strong><br>
+          <span style="font-size:0.65rem;color:#6B7280">${escHtml(f.title || '')}</span></td>
+        <td style="padding:3px 6px">${_audMarkChip(f.mark)}<br>
+          <span style="font-size:0.62rem;color:#6B7280">${escHtml((f.rcCategory || '').replace(/ \(.*\)/, ''))}</span></td>
+        <td style="padding:3px 6px">${_audStatusChip(f)}<br>
+          <span style="font-size:0.62rem;color:${late ? '#DC2626' : '#6B7280'}">CAP due ${due}${f.reopenedCount ? ` · reopened ×${f.reopenedCount}` : ''}</span></td>
+        <td style="padding:3px 6px">
+          <label style="font-size:0.62rem;display:block">CAP sent<input type="date" data-fid="${f.id}" data-field="capSubmittedAt" value="${f.capSubmittedAt || ''}" style="font-size:0.62rem;padding:1px;width:104px"></label>
+          <label style="font-size:0.62rem;display:block">Action due<input type="date" data-fid="${f.id}" data-field="actionDueAt" value="${f.actionDueAt || ''}" style="font-size:0.62rem;padding:1px;width:104px"></label>
+        </td>
+        <td style="padding:3px 6px">
+          <label style="font-size:0.62rem;display:block">Closed<input type="date" data-fid="${f.id}" data-field="closedAt" value="${f.closedAt || ''}" style="font-size:0.62rem;padding:1px;width:104px"></label>
+          <label style="font-size:0.62rem;display:block">Eff. verified<input type="date" data-fid="${f.id}" data-field="effVerifiedAt" value="${f.effVerifiedAt || ''}" style="font-size:0.62rem;padding:1px;width:104px"></label>
+        </td>
+        <td style="padding:3px 6px;white-space:nowrap">
+          <button class="btn btn-sm aud-act" data-act="cap" data-fid="${f.id}" style="padding:2px 6px;font-size:0.62rem;min-width:auto;margin-bottom:2px">CAP sent today</button>
+          <button class="btn btn-sm aud-act" data-act="close" data-fid="${f.id}" style="padding:2px 6px;font-size:0.62rem;min-width:auto;margin-bottom:2px">Close</button>
+          <button class="btn btn-sm aud-act" data-act="verify" data-fid="${f.id}" style="padding:2px 6px;font-size:0.62rem;min-width:auto;margin-bottom:2px">Eff. ok</button>
+          <button class="btn btn-sm aud-act" data-act="reopen" data-fid="${f.id}" style="padding:2px 6px;font-size:0.62rem;min-width:auto;color:#DC2626">Reopen</button>
+        </td>
+      </tr>`;
+  }).join('');
+  return `
+      <tr style="background:rgba(0,0,0,0.03)">
+        <td colspan="6" style="padding:4px 6px">
+          ${showStation ? `<strong>${escHtml(a.station)}</strong> · ` : ''}<strong>${escHtml(AuditPillar.AUDIT_TYPES[a.type] || a.type)}</strong> · ${escHtml(a.date)}
+          · auditor ${escHtml(a.auditor || '—')}
+          · items ${a.itemsObserved}/${a.itemsApplicable} observed, ${a.itemsCompliant} compliant
+          · SLA window ends ${slaDue}
+          <button class="btn btn-sm aud-del-audit" data-id="${a.id}" style="float:right;padding:1px 8px;font-size:0.62rem;color:#DC2626;min-width:auto">delete audit</button>
+        </td>
+      </tr>
+      ${frows || '<tr><td colspan="6" style="padding:4px 6px;font-size:0.68rem;color:#9CA3AF">no findings recorded — clean audit</td></tr>'}`;
+}
+
+function _audRenderScorecard(endDate) {
+  const res = AuditPillar.computeStats(endDate);
+  const el = document.getElementById('aud-scorecard');
+  if (!res.stations.length) {
+    el.innerHTML = '<p style="font-size:0.75rem;color:var(--color-text-muted);margin:0.5rem 0">No audit data yet. Log an audit above to activate Pillar D.</p>';
+    return;
+  }
+  const fmt = (v, d) => v == null ? '<span style="color:#9CA3AF">—</span>' : (+v).toFixed(d);
+  const rows = res.stations.slice().sort((a, b) => (b.D ?? -Infinity) - (a.D ?? -Infinity)).map(r => `
+    <tr>
+      <td><strong>${escHtml(r.station)}</strong></td>
+      <td>${r.observed}${r.qaActive ? '' : '*'}</td>
+      <td>${fmt(r.kappa != null ? r.kappa * 100 : null, 1)}</td>
+      <td>${r.nAudits}/${r.nQciAudits}</td>
+      <td>${r.nFindings}</td>
+      <td>${fmt(r.L, 3)}</td>
+      <td>${fmt(r.T, 2)}</td>
+      <td>${fmt(r.P, 2)}</td>
+      <td>${fmt(r.qstat, 2)}</td>
+      <td>${fmt(r.Dstar, 2)}</td>
+      <td>${fmt(r.Qstar, 2)}</td>
+      <td>${r.D != null ? `<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-weight:700;background:${_audZColor(r.D)}">${r.D > 0 ? '+' : ''}${r.D.toFixed(2)}</span>` : '<span style="color:#9CA3AF">inactive</span>'}</td>
+    </tr>`).join('');
+  el.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:0.72rem">
+      <thead><tr style="text-align:left;border-bottom:1px solid var(--color-border,#E5E7EB)">
+        <th style="padding:3px 6px">Stn</th><th style="padding:3px 6px">Obs*</th><th style="padding:3px 6px">κ%</th><th style="padding:3px 6px">QA/QCI</th><th style="padding:3px 6px">Findings</th>
+        <th style="padding:3px 6px" title="Decayed deficiency load ÷ observed items">L</th>
+        <th style="padding:3px 6px" title="CAP breaches − verified effectiveness">T</th>
+        <th style="padding:3px 6px" title="12-month repeat findings">P</th>
+        <th style="padding:3px 6px" title="QCI deficiency rate incl. trend">q</th>
+        <th style="padding:3px 6px" title="0.45·z(L)+0.35·z(T)+0.20·z(P)">D*</th>
+        <th style="padding:3px 6px" title="z(q)">Q*</th>
+        <th style="padding:3px 6px" title="0.70·D* + 0.30·Q* — enters SMPRI standardization">D</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <p style="font-size:0.66rem;color:#9CA3AF;margin:0.3rem 0 0">* below ${AuditPillar.PARAMS.ACTIVATION_FLOOR_OBSERVED} observed items — stream inactive for z-scoring.</p>`;
+}
+
+function _audRenderRegister() {
+  const stFilter = document.getElementById('aud-reg-station').value;
+  const statusFilter = document.getElementById('aud-reg-status').value;
+  const data = AuditPillar.load();
+  let audits = data.audits.slice().sort((a, b) => b.date.localeCompare(a.date));
+  if (stFilter) audits = audits.filter(a => a.station === stFilter);
+  let shown = 0;
+  const body = audits.map(a => {
+    const all = data.findings.filter(f => f.auditId === a.id);
+    const visible = statusFilter
+      ? all.filter(f => AuditPillar.findingStatus(f) === statusFilter)
+      : all;
+    shown += visible.length;
+    if (!visible.length && statusFilter) return '';
+    return _auditBlockHtml(a, visible, true);
+  }).join('');
+  document.getElementById('aud-register').innerHTML = audits.length ? `
+    <table style="width:100%;border-collapse:collapse;font-size:0.72rem">
+      <thead><tr style="text-align:left;border-bottom:1px solid var(--color-border,#E5E7EB)">
+        <th style="padding:3px 6px">Checklist item</th><th style="padding:3px 6px">Mark</th><th style="padding:3px 6px">Status</th>
+        <th style="padding:3px 6px">CAP lifecycle</th><th style="padding:3px 6px">Closure &amp; effectiveness</th><th style="padding:3px 6px">Quick actions</th>
+      </tr></thead>
+      <tbody>${body}</tbody>
+    </table>` : '<p style="font-size:0.75rem;color:var(--color-text-muted)">No audits logged yet.</p>';
+  document.getElementById('aud-reg-count').textContent = `${shown} finding(s)`;
+}
+
+function renderFormPillarD() {
+  if (typeof AuditPillar === 'undefined') return;
+  const emptyEl = document.getElementById('fd-empty');
+  const panelEl = document.getElementById('fd-panel');
+  if (!emptyEl || !panelEl) return;
+
+  const iata = _fdStationIata();
+  if (!iata) {
+    emptyEl.style.display = 'block';
+    panelEl.style.display = 'none';
+  } else {
+    emptyEl.style.display = 'none';
+    panelEl.style.display = 'block';
+  }
+
+  _pillarDInitOnce();
+  _refreshPillarDUi();
+}
